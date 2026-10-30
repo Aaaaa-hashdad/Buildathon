@@ -87,6 +87,45 @@ def boards_info():
     send("boards", count=len(companies), by_platform=counts, file=str(job_boards.COMPANIES_FILE))
 
 
+web_thread = None
+
+
+def web_status():
+    import mcp_server
+    running = bool(web_thread and web_thread.is_alive())
+    send("mcp_web", running=running, url=mcp_server.web_url() if running else "")
+
+
+def start_web():
+    # Web-mode MCP (for Superhuman Go) runs inside this process, so it stops when the app closes.
+    global web_thread
+    import socket
+    import mcp_server
+    if web_thread and web_thread.is_alive():
+        return web_status()
+    port = mcp_server.web_settings()["port"]
+    try:
+        socket.create_connection(("127.0.0.1", port), timeout=0.3).close()
+        send("log", text=f"Port {port} is already in use, so web mode can't start. Close whatever uses it, "
+                         f"or change the port in mcp_web.json.")
+        return web_status()
+    except OSError:
+        pass        # nothing there: free to start
+
+    def serve():
+        try:
+            mcp_server.web_server().run("streamable-http")
+        except Exception as e:
+            send("log", text=f"Web mode stopped: {e}")
+    web_thread = threading.Thread(target=serve, daemon=True)
+    web_thread.start()
+    import time
+    time.sleep(1.5)     # let it bind before reporting the URL
+    send("log", text="Web mode is on. Copy the URL into Superhuman Go > Connectors > Add custom MCP. "
+                     "It only works while this app is open.")
+    web_status()
+
+
 def superhuman_send(path):
     # Sets the doc up on first use, then adds or updates the file's jobs in the Applications table.
     def work():
@@ -139,6 +178,9 @@ def main():
                 boards_task(lambda: job_boards.add(text, log=lambda t: send("log", text=t)))
         elif cmd == "mcp_status":
             send("mcp", **mcp_setup.status())
+            web_status()
+        elif cmd == "mcp_web_start":
+            threading.Thread(target=start_web, daemon=True).start()
         elif cmd in ("mcp_connect_desktop", "mcp_connect_code"):
             def connect(fn=mcp_setup.connect_claude_desktop if cmd == "mcp_connect_desktop"
                         else mcp_setup.connect_claude_code):

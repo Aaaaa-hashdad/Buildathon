@@ -13,6 +13,7 @@ electron/node_modules/
 __pycache__/
 *.pyc
 
-# Superhuman Docs: your API token (secret) and your doc IDs
+# Secrets: Superhuman Docs token, doc IDs, and the web-mode MCP secret
 superhuman_token.txt
 superhuman.json
+mcp_web.json

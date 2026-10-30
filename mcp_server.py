@@ -3,7 +3,8 @@
 Lets Claude (Claude Code / Claude Desktop, on your normal subscription, no API key) read the
 jobs the bot collected, read your master resume, and save tailored resumes as Word files.
 
-Run by Claude automatically via .mcp.json; you don't start it yourself.
+Run by Claude automatically (Connect AI in the app); you don't start it yourself.
+Web mode for apps that need a URL (Superhuman Go): python mcp_server.py --web
 """
 
 import re
@@ -206,5 +207,49 @@ def save_tailored_resume(company: str, job_title: str, resume_markdown: str,
     return {"ok": True, "saved": saved}
 
 
+# ---------- web mode (for apps that need a URL, like Superhuman Go) ----------
+
+WEB_CONFIG = HERE / "mcp_web.json"      # port and secret; git-ignored
+WEB_TOOLS = [list_results, read_results, get_job, search_job_boards, list_companies, add_company,
+             get_master_resume, save_tailored_resume]      # run_search is left out: no LinkedIn over the web
+
+
+def web_settings():
+    """Port and secret for web mode, made once and kept. The secret in the URL works like a password."""
+    import json
+    import secrets
+    try:
+        cfg = json.loads(WEB_CONFIG.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        cfg = {}
+    if not cfg.get("secret"):
+        cfg = {"port": cfg.get("port", 8765), "secret": secrets.token_urlsafe(18)}
+        WEB_CONFIG.write_text(json.dumps(cfg, indent=1), encoding="utf-8")
+    return cfg
+
+
+def web_url(host="localhost"):
+    cfg = web_settings()
+    return f"http://{host}:{cfg['port']}/mcp/{cfg['secret']}"
+
+
+def web_server(allowed_hosts=()):
+    """The same tools minus LinkedIn, over HTTP on this PC only (127.0.0.1)."""
+    from mcp.server.transport_security import TransportSecuritySettings
+    cfg = web_settings()
+    hosts = ["127.0.0.1:*", "localhost:*", "[::1]:*", *allowed_hosts]
+    web = FastMCP("job-alert", host="127.0.0.1", port=cfg["port"], streamable_http_path=f"/mcp/{cfg['secret']}",
+                  stateless_http=True, log_level="WARNING", transport_security=TransportSecuritySettings(
+                      enable_dns_rebinding_protection=True, allowed_hosts=hosts,
+                      allowed_origins=[f"http://{h}" for h in hosts] + [f"https://{h}" for h in hosts]))
+    for fn in WEB_TOOLS:
+        web.add_tool(fn)
+    return web
+
+
 if __name__ == "__main__":
-    mcp.run()
+    if "--web" in sys.argv:
+        _log(f"Web mode: {web_url()}")
+        web_server().run("streamable-http")
+    else:
+        mcp.run()

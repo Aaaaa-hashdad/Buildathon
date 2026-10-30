@@ -116,6 +116,24 @@ function showMcp(id, state) {
 $('goAi').onclick = () => $('aiCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
 $('mcpDesktopBtn').onclick = () => { $('mcpDesktopBtn').disabled = true; window.bot.send({ cmd: 'mcp_connect_desktop' }); };
 $('mcpCodeBtn').onclick = () => { $('mcpCodeBtn').disabled = true; window.bot.send({ cmd: 'mcp_connect_code' }); };
+// Web mode (Superhuman Go): first click starts it, after that the button copies the URL.
+let webUrl = '';
+async function copyText(text, what) {
+  try {
+    await navigator.clipboard.writeText(text);
+    log(`${what} copied.`);
+  } catch {
+    log(`Copy didn't work here. Select and copy it from below:\n${text}`);
+  }
+}
+$('mcpWebBtn').onclick = () => {
+  if (webUrl) return copyText(webUrl, 'Web mode URL');
+  $('mcpWebBtn').disabled = true;
+  $('mcpWebBtn').textContent = 'Starting…';
+  try { localStorage.setItem('mcpWeb', 'on'); } catch { /* just won't auto-start next time */ }
+  window.bot.send({ cmd: 'mcp_web_start' });
+};
+
 $('mcpCopy').onclick = async () => {
   if (!mcpConfig) return;
   try {
@@ -185,12 +203,23 @@ window.bot.onEvent((ev) => {
       outputDir = ev.output_dir;
       window.bot.send({ cmd: source() === 'linkedin' ? 'chrome_status' : 'boards_info' });   // Python can start after the window asked
       window.bot.send({ cmd: 'mcp_status' });
+      try { if (localStorage.getItem('mcpWeb') === 'on') window.bot.send({ cmd: 'mcp_web_start' }); } catch { /* off */ }
       break;
     case 'chrome':
       $('chrome').textContent = ev.connected ? 'Chrome connected' : 'Chrome not open';
       $('chrome').className = 'pill ' + (ev.connected ? 'on' : 'off');
       break;
     case 'columns': columns = ev.columns; linkCol = ev.link; break;
+    case 'mcp_web':
+      webUrl = ev.url || '';
+      $('mcpWebBtn').disabled = false;
+      $('mcpWebBtn').textContent = webUrl ? 'Copy URL' : 'Start web mode';
+      $('mcpWeb').textContent = webUrl
+        ? 'On. Copy the URL into Go > Connectors > Add custom MCP. Treat it like a password.'
+        : 'Needs a URL: start web mode, then paste the URL in Go > Connectors > Add custom MCP. ' +
+          'No LinkedIn tools, and only while this app is open.';
+      $('mcpWeb').className = 'hint' + (webUrl ? ' ok' : '');
+      break;
     case 'mcp':
       mcpConfig = ev.config;
       showMcp('mcpDesktop', ev.claude_desktop);
