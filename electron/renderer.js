@@ -98,6 +98,43 @@ $('boardsImport').onclick = () => {
 };
 $('boardsEdit').onclick = () => companiesFile && window.bot.openPath(companiesFile);
 
+// AI assistants: connect the bot's MCP server to Claude on this PC.
+let mcpConfig = '';
+const MCP_TEXT = {
+  'connected': ['Connected', 'ok'],
+  'needs update': ['Connected to an old folder path: connect again', 'warn-text'],
+  'not connected': ['Not connected', ''],
+  'not installed': ['Not installed on this PC', ''],
+};
+function showMcp(id, state) {
+  const [text, cls] = MCP_TEXT[state] || [state, ''];
+  $(id).textContent = text;
+  $(id).className = 'hint ' + cls;
+  $(id + 'Btn').disabled = state === 'not installed';
+  $(id + 'Btn').textContent = state === 'connected' ? 'Reconnect' : 'Connect';
+}
+$('mcpDesktopBtn').onclick = () => { $('mcpDesktopBtn').disabled = true; window.bot.send({ cmd: 'mcp_connect_desktop' }); };
+$('mcpCodeBtn').onclick = () => { $('mcpCodeBtn').disabled = true; window.bot.send({ cmd: 'mcp_connect_code' }); };
+$('mcpCopy').onclick = async () => {
+  if (!mcpConfig) return;
+  try {
+    await navigator.clipboard.writeText(mcpConfig);
+    log('MCP settings copied. Paste them into the other app\'s MCP config.');
+  } catch {
+    log('Copy didn\'t work here; these are the settings:\n' + mcpConfig);
+  }
+};
+
+// Jobs (LinkedIn or career sites) go to the Superhuman Docs tracker. The first click also sets the doc up.
+const canTrack = () => lastFile && (lastKind === 'jobs' || lastKind === 'boards');
+let trackerLink = '';
+$('superhuman').onclick = () => {
+  if (!canTrack()) return;
+  $('superhuman').disabled = true;
+  $('superhuman').textContent = 'Sending…';
+  window.bot.send({ cmd: 'superhuman_send', file: lastFile });
+};
+
 // After a LinkedIn jobs search: send that search's companies to the career-site list.
 $('linkedinImport').onclick = () => {
   if (!lastFile || lastKind !== 'jobs') return;
@@ -129,6 +166,7 @@ function start() {
   lastKind = kind;
   $('excel').disabled = true;
   $('linkedinImport').disabled = true;
+  $('superhuman').disabled = true;
   log(kind === 'boards'
     ? `--- career sites: '${query || 'all jobs'}' ${msg.location} ---`
     : `--- LinkedIn ${kind}: '${query}' ${msg.location} (${msg.pages} pages, ${speed} speed) ---`);
@@ -145,12 +183,24 @@ window.bot.onEvent((ev) => {
     case 'ready':
       outputDir = ev.output_dir;
       window.bot.send({ cmd: source() === 'linkedin' ? 'chrome_status' : 'boards_info' });   // Python can start after the window asked
+      window.bot.send({ cmd: 'mcp_status' });
       break;
     case 'chrome':
       $('chrome').textContent = ev.connected ? 'Chrome connected' : 'Chrome not open';
       $('chrome').className = 'pill ' + (ev.connected ? 'on' : 'off');
       break;
     case 'columns': columns = ev.columns; linkCol = ev.link; break;
+    case 'mcp':
+      mcpConfig = ev.config;
+      showMcp('mcpDesktop', ev.claude_desktop);
+      showMcp('mcpCode', ev.claude_code);
+      break;
+    case 'superhuman':
+      trackerLink = ev.doc_link || '';
+      $('superhuman').textContent = 'Send to Superhuman Docs';
+      $('superhuman').disabled = !canTrack();
+      if (trackerLink) log(`Tracker: ${trackerLink}`);
+      break;
     case 'boards':
       companiesFile = ev.file;
       $('boardsImport').disabled = false;
@@ -175,6 +225,7 @@ window.bot.onEvent((ev) => {
         lastFile = ev.path;
         $('excel').disabled = false;
         log("Done! Click 'Open Excel'.");
+        $('superhuman').disabled = !canTrack();
         if (lastKind === 'jobs') {
           $('linkedinImport').disabled = false;
           log("Click 'Add these companies to career sites' to also follow them without LinkedIn.");

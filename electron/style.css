@@ -57,6 +57,12 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1
 .boards-head .hint { margin: 0; }
 #companiesCard .buttons + .buttons { margin-top: 8px; }
 #companiesCard .buttons input { flex: 1; min-width: 0; }
+.ai-intro { margin: -4px 0 6px; }
+.ai-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.ai-row > div { flex: 1; display: flex; flex-direction: column; }
+.ai-row .hint { margin: 0; }
+.ai-row .ok { color: var(--green); }
+.ai-row .warn-text { color: var(--amber); }
 .check { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
 .warn { color: var(--red); font-size: 12px; }
 .buttons { display: flex; gap: 8px; align-items: center; }

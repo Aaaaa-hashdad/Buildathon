@@ -12,3 +12,7 @@ company_lookups.json
 electron/node_modules/
 __pycache__/
 *.pyc
+
+# Superhuman Docs: your API token (secret) and your doc IDs
+superhuman_token.txt
+superhuman.json

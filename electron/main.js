@@ -90,6 +90,11 @@ app.whenReady().then(() => {
          if (${JSON.stringify(kind)} !== 'boards') document.getElementById('kind').value = ${JSON.stringify(kind)};
          document.getElementById('kind').dispatchEvent(new Event('change'));`));
     }
+    // BOT_SCREENSHOT_SCROLL=bottom captures the end of the page instead of the top.
+    if (process.env.BOT_SCREENSHOT_SCROLL === 'bottom') {
+      win.webContents.once('did-finish-load', () => setTimeout(() => win.webContents.executeJavaScript(
+        'window.scrollTo(0, document.body.scrollHeight)'), 3000));
+    }
     win.webContents.once('did-finish-load', () => setTimeout(async () => {
       const fs = require('fs');
       fs.writeFileSync(process.env.BOT_SCREENSHOT, (await win.webContents.capturePage()).toPNG());

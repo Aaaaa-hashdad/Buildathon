@@ -15,6 +15,8 @@ import threading
 
 import job_boards
 import linkedin_bot as bot
+import mcp_setup
+import superhuman_docs
 
 CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 _out_lock = threading.Lock()
@@ -85,6 +87,23 @@ def boards_info():
     send("boards", count=len(companies), by_platform=counts, file=str(job_boards.COMPANIES_FILE))
 
 
+def superhuman_send(path):
+    # Sets the doc up on first use, then adds or updates the file's jobs in the Applications table.
+    def work():
+        say = lambda t: send("log", text=t)
+        try:
+            if not superhuman_docs.status()["ready"] and not superhuman_docs.setup(log=say):
+                return
+            superhuman_docs.send(path, log=say)
+        except superhuman_docs.NotConnected as e:
+            say(str(e))
+        except Exception as e:
+            say(f"Superhuman Docs error: {e}")
+        finally:
+            send("superhuman", **superhuman_docs.status())
+    threading.Thread(target=work, daemon=True).start()
+
+
 def boards_task(fn):
     # Adding and importing hit the network, so they run off the main loop.
     def work():
@@ -118,6 +137,21 @@ def main():
             text = msg.get("text", "").strip()
             if text:
                 boards_task(lambda: job_boards.add(text, log=lambda t: send("log", text=t)))
+        elif cmd == "mcp_status":
+            send("mcp", **mcp_setup.status())
+        elif cmd in ("mcp_connect_desktop", "mcp_connect_code"):
+            def connect(fn=mcp_setup.connect_claude_desktop if cmd == "mcp_connect_desktop"
+                        else mcp_setup.connect_claude_code):
+                try:
+                    fn(log=lambda t: send("log", text=t))
+                except Exception as e:
+                    send("log", text=f"Couldn't connect: {e}")
+                send("mcp", **mcp_setup.status())
+            threading.Thread(target=connect, daemon=True).start()     # the claude CLI can take a few seconds
+        elif cmd == "superhuman_status":
+            send("superhuman", **superhuman_docs.status())
+        elif cmd == "superhuman_send" and msg.get("file"):
+            superhuman_send(msg["file"])
         elif cmd == "boards_import":
             # With "file": only that LinkedIn jobs search (the button after a run). Without: every jobs file.
             path = msg.get("file")

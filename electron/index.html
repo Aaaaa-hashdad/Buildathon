@@ -108,6 +108,9 @@
         <button id="linkedinImport" class="secondary" hidden disabled
                 title="Looks up the companies from this LinkedIn jobs search on the 5 career sites and adds the ones it finds to your list">
           Add these companies to career sites</button>
+        <button id="superhuman" class="secondary" disabled
+                title="Adds these jobs to the Applications table in your Superhuman Docs 'Job Alert' doc">
+          Send to Superhuman Docs</button>
         <button id="folder" class="secondary">Results folder</button>
         <button id="excel" class="secondary" disabled>Open Excel</button>
       </div>
@@ -120,6 +123,24 @@
       </div>
       <p class="hint">Double-click a row to open the job or profile in your browser.</p>
       <pre id="log"></pre>
+    </section>
+
+    <section class="card ai-card">
+      <h2>Connect AI assistants</h2>
+      <p class="hint ai-intro">Lets Claude read your jobs and resume, tailor resumes and save them. Works on any PC:
+        the paths are found automatically, so after moving the folder or installing somewhere new, just connect again.</p>
+      <div class="ai-row">
+        <div><b>Claude Desktop</b><span id="mcpDesktop" class="hint">checking…</span></div>
+        <button id="mcpDesktopBtn" class="secondary">Connect</button>
+      </div>
+      <div class="ai-row">
+        <div><b>Claude Code</b><span id="mcpCode" class="hint">checking…</span></div>
+        <button id="mcpCodeBtn" class="secondary">Connect</button>
+      </div>
+      <div class="ai-row">
+        <div><b>Other apps</b><span class="hint">Any app that takes an MCP config (command + args)</span></div>
+        <button id="mcpCopy" class="secondary">Copy settings</button>
+      </div>
     </section>
   </main>
   <script src="renderer.js"></script>

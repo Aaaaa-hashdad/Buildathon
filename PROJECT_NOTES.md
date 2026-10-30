@@ -63,7 +63,25 @@ In the app: Where to search → **Company career sites**. Results: `output\board
 | `output\` | Excel results |
 | `chrome-profile\` | The bot's Chrome data and LinkedIn login. Keep it private and never share it. |
 
-MCP is registered in **`.mcp.json` in the parent project folder** (`Alert System\.mcp.json`) with an
+**Connect AI assistants** (app card, `mcp_setup.py`): connects the MCP server on any PC, with the paths worked out at
+runtime (`sys.executable` + this folder).
+- **Claude Desktop:** writes `mcpServers.linkedin-bot` into every Claude Desktop config it finds, keeping the
+  other settings and saving a `.json.bak`. The Windows Store app's config is
+  `%LOCALAPPDATA%\Claude-Data\<pkg>\claude_desktop_config.json`; a standard install uses
+  `%APPDATA%\Claude\claude_desktop_config.json`. Claude Desktop must be fully quit and reopened afterwards.
+- **Claude Code:** runs `claude mcp add --scope user linkedin-bot -- <python> <mcp_server.py>`, so it works in
+  every folder without the approval prompt.
+- **Other apps:** "Copy settings" puts the JSON on the clipboard. Superhuman Go's "Add custom MCP" probably
+  wants a URL, not a command. The server only does stdio for now, so that's not supported yet.
+- "Needs update" = connected, but to an old path (folder moved): click Connect again.
+
+**Superhuman Docs tracker** (`superhuman_docs.py`, "Send to Superhuman Docs" button): uses the free Docs API with
+a personal token in `superhuman_token.txt`. Git ignores that file; never share it. The first send creates a
+"Job Alert" doc and tries to make an Applications table from an HTML table in a page, because the API can't create
+tables. If that fails, the user makes the table by hand. Rows are matched on Job URL. Status, Match % and Resume
+are only set on new rows. **Not tested yet: waiting on the user's token.**
+
+The old way MCP is registered: **`.mcp.json` in the parent project folder** (`Alert System\.mcp.json`) with an
 **absolute path** to `mcp_server.py`. **If you move this folder, update that path** (or create a new
 `.mcp.json` in the new project root).
 
