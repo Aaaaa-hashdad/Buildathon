@@ -200,15 +200,32 @@ def fetch_smartrecruiters(slug, name, query, location, stop):
     params = {"limit": 100, "offset": 0}
     if query:
         params["q"] = query
-    total = get_json(base, {"limit": 1})["totalFound"] if query else None
-    first = get_json(base, params)
-    postings = first["content"]
-    # The first page says how many there are, so the rest are fetched together.
-    offsets = range(100, min(first["totalFound"], SR_MAX_POSTINGS), 100)
-    with ThreadPoolExecutor(SR_DETAIL_WORKERS) as pool:
-        for page in pool.map(lambda o: [] if stop.is_set() else get_json(base, dict(params, offset=o))["content"],
-                             offsets):
-            postings += page
+    total = get_json(base, {"limit": 1})["totalFound"] if (query or location) else None
+
+    def fetch_all(extra):
+        first = get_json(base, dict(params, **extra))
+        found = first["content"]
+        # The first page says how many there are, so the rest are fetched together.
+        offsets = range(100, min(first["totalFound"], SR_MAX_POSTINGS), 100)
+        with ThreadPoolExecutor(SR_DETAIL_WORKERS) as pool:
+            for page in pool.map(lambda o: [] if stop.is_set() else
+                                 get_json(base, dict(params, offset=o, **extra))["content"], offsets):
+                found += page
+        return found
+
+    # Big employers have thousands of jobs and only SR_MAX_POSTINGS are read, so with a location the
+    # filtering happens on SmartRecruiters' side: as a city ("Plymouth"), else as a region ("MI").
+    places = [w.strip() for w in location.split(",") if w.strip()]
+    if not places or any(p.lower() == "remote" for p in places):
+        postings = fetch_all({})
+    else:
+        postings, ids = [], set()
+        for place in places:
+            for p in fetch_all({"city": place}) or fetch_all({"region": place}):
+                if p["id"] not in ids:
+                    ids.add(p["id"])
+                    postings.append(p)
+
     def full_location(p):
         loc = p.get("location") or {}
         return loc.get("fullLocation") or ", ".join(x for x in (loc.get("city"), loc.get("region"), loc.get("country")) if x)
