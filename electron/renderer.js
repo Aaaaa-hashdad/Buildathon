@@ -113,6 +113,7 @@ function showMcp(id, state) {
   $(id + 'Btn').disabled = state === 'not installed';
   $(id + 'Btn').textContent = state === 'connected' ? 'Reconnect' : 'Connect';
 }
+$('goAi').onclick = () => $('aiCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
 $('mcpDesktopBtn').onclick = () => { $('mcpDesktopBtn').disabled = true; window.bot.send({ cmd: 'mcp_connect_desktop' }); };
 $('mcpCodeBtn').onclick = () => { $('mcpCodeBtn').disabled = true; window.bot.send({ cmd: 'mcp_connect_code' }); };
 $('mcpCopy').onclick = async () => {
