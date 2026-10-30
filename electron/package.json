@@ -1,0 +1,13 @@
+{
+  "name": "linkedin-data-bot",
+  "version": "1.0.0",
+  "description": "Job Alert: jobs from company career sites and LinkedIn, saved to Excel",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "33.2.1"
+  }
+}

@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'">
+  <title>Job Alert</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill="currentColor"/>
+      <path d="M16 8.5a5.5 5.5 0 0 0-5.5 5.5v3.6L9 20.5h14l-1.5-2.9V14A5.5 5.5 0 0 0 16 8.5Z" fill="#fff"/>
+      <path d="M13.8 22.2a2.3 2.3 0 0 0 4.4 0Z" fill="#fff"/>
+    </svg>
+    <div class="title">
+      <h1>Job Alert</h1>
+      <span class="sub">Jobs from company career sites and LinkedIn, saved to Excel</span>
+    </div>
+    <span id="chrome" class="pill off" hidden>Chrome not open</span>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Where to search</h2>
+      <div class="sources" role="radiogroup" aria-label="Where to search">
+        <label class="source">
+          <input type="radio" name="source" value="boards" checked>
+          <b>Company career sites</b>
+          <small>Greenhouse · Lever · Ashby · Workable · SmartRecruiters</small>
+          <span class="tag safe">No login · no account risk</span>
+        </label>
+        <label class="source">
+          <input type="radio" name="source" value="linkedin">
+          <b>LinkedIn</b>
+          <small>People, companies and jobs, read in your own Chrome</small>
+          <span class="tag risky">Uses your account · go slow</span>
+        </label>
+      </div>
+    </section>
+
+    <section class="card" id="chromeCard" hidden>
+      <h2>Open Chrome and log into LinkedIn</h2>
+      <button id="openChrome" class="secondary">Open Chrome</button>
+      <p class="hint">Opens the bot's own Chrome window. You only log in the first time.</p>
+    </section>
+
+    <section class="card" id="companiesCard">
+      <h2>Your companies</h2>
+      <div class="boards-head">
+        <b id="boardsCount">Loading the list…</b>
+        <span id="boardsPlatforms" class="hint"></span>
+      </div>
+      <div class="buttons">
+        <input id="boardsAdd" placeholder="Add a company: name (Stripe) or a link to one of its jobs">
+        <button id="boardsAddBtn" class="secondary">Add</button>
+      </div>
+      <div class="buttons">
+        <button id="boardsImport" class="secondary">Import companies from LinkedIn results</button>
+        <button id="boardsEdit" class="secondary">Edit list</button>
+      </div>
+      <p class="hint">Each search checks every company on this list. Import takes the companies from your
+        LinkedIn job searches and adds the ones that post on these 5 sites. The first import takes about a minute;
+        after that only new names are checked. Companies on Workday, iCIMS and the like can't be added yet.</p>
+    </section>
+
+    <section class="card">
+      <h2>What to look for</h2>
+      <div class="grid">
+        <label id="kindRow">Looking for
+          <select id="kind">
+            <option value="people">People</option>
+            <option value="companies">Companies</option>
+            <option value="jobs">Jobs</option>
+          </select>
+        </label>
+        <label>Search for
+          <input id="query" placeholder="e.g. civil engineer" autofocus>
+        </label>
+        <label id="pagesRow">Pages
+          <input id="pages" type="number" min="1" max="10" value="3">
+        </label>
+        <label><span>Location <span class="opt">(optional)</span></span>
+          <input id="location" placeholder="e.g. Houston">
+        </label>
+      </div>
+      <p id="boardsHint" class="hint">Keeps jobs whose title has all your search words. Leave it blank for
+        every job. Location can list several places: <i>Houston, Remote</i>.</p>
+
+      <div id="speedRow" class="speeds" role="radiogroup" aria-label="Speed">
+        <label class="speed low"><input type="radio" name="speed" value="low"><b>Low</b><small>~3s per action · safest</small></label>
+        <label class="speed medium"><input type="radio" name="speed" value="medium" checked><b>Medium</b><small>~1s per action · careful</small></label>
+        <label class="speed high"><input type="radio" name="speed" value="high"><b>High</b><small>quick · higher ban risk</small></label>
+      </div>
+
+      <label id="grabRow" class="check" hidden>
+        <input type="checkbox" id="grab">
+        Also get hidden company-site apply links <span class="warn">(clicks Apply, counts as an apply click)</span>
+      </label>
+    </section>
+
+    <section class="card">
+      <h2>Go</h2>
+      <div class="buttons">
+        <button id="start" class="primary">Start</button>
+        <button id="stop" class="danger" disabled>Stop</button>
+        <span class="spacer"></span>
+        <button id="linkedinImport" class="secondary" hidden disabled
+                title="Looks up the companies from this LinkedIn jobs search on the 5 career sites and adds the ones it finds to your list">
+          Add these companies to career sites</button>
+        <button id="folder" class="secondary">Results folder</button>
+        <button id="excel" class="secondary" disabled>Open Excel</button>
+      </div>
+      <div id="now" class="now idle">Idle</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr id="head"></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <p class="hint">Double-click a row to open the job or profile in your browser.</p>
+      <pre id="log"></pre>
+    </section>
+  </main>
+  <script src="renderer.js"></script>
+</body>
+</html>

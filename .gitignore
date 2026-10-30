@@ -1,0 +1,14 @@
+# Private: the bot's Chrome holds your LinkedIn login. Never commit or share it.
+chrome-profile/
+
+# Your data, not code
+output/
+resumes/
+profile/*
+!profile/README.txt
+company_lookups.json
+
+# Generated
+electron/node_modules/
+__pycache__/
+*.pyc

@@ -1,0 +1,80 @@
+:root {
+  --bg: #f5f6f8; --card: #ffffff; --text: #1c2024; --muted: #5f6b76; --line: #e2e5e9;
+  --accent: #0f766e; --accent-soft: #e3f3f1; --green: #15803d; --amber: #b45309; --red: #c81e1e;
+  --input: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14171a; --card: #1e2226; --text: #e8ebee; --muted: #98a2ab; --line: #343a40;
+    --accent: #2dd4bf; --accent-soft: #123a36; --green: #4ade80; --amber: #fbbf24; --red: #f87171;
+    --input: #181b1f;
+  }
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 "Segoe UI", system-ui, sans-serif; }
+header { display: flex; align-items: center; gap: 12px; padding: 14px 20px; background: var(--card); border-bottom: 1px solid var(--line); }
+.logo { width: 34px; height: 34px; color: var(--accent); flex: none; }
+.title { flex: 1; display: flex; flex-direction: column; }
+h1 { font-size: 17px; margin: 0; }
+.sub { color: var(--muted); font-size: 12px; }
+.pill { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 99px; }
+.pill.on { background: color-mix(in srgb, var(--green) 15%, transparent); color: var(--green); }
+.pill.off { background: color-mix(in srgb, var(--red) 15%, transparent); color: var(--red); }
+main { padding: 16px 20px 24px; display: grid; gap: 14px; counter-reset: step; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+h2 { font-size: 15px; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+/* Step numbers count only the cards on screen, so they stay 1, 2, 3... for either source. */
+.card:not([hidden]) > h2::before { counter-increment: step; content: counter(step); width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--card); font-size: 12px; display: grid; place-items: center; }
+.hint { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+
+.sources { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.source { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; cursor: pointer; display: flex; flex-direction: column; gap: 3px; position: relative; }
+.source input { position: absolute; opacity: 0; }
+.source b { font-size: 15px; }
+.source small { color: var(--muted); }
+.source:has(input:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--accent-soft); }
+.source:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.source:has(input:disabled) { cursor: default; opacity: .7; }
+.tag { align-self: flex-start; margin-top: 6px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 99px; }
+.tag.safe { background: color-mix(in srgb, var(--green) 15%, transparent); color: var(--green); }
+.tag.risky { background: color-mix(in srgb, var(--amber) 15%, transparent); color: var(--amber); }
+
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+.grid label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 12px; color: var(--muted); }
+.opt { font-weight: 400; }
+input, select { font: inherit; color: var(--text); background: var(--input); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; }
+input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.speeds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+.speed { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; cursor: pointer; display: flex; flex-direction: column; position: relative; }
+.speed input { position: absolute; opacity: 0; }
+.speed small { color: var(--muted); }
+.speed.low:has(input:checked) { border-color: var(--green); box-shadow: inset 0 0 0 1px var(--green); }
+.speed.medium:has(input:checked) { border-color: var(--amber); box-shadow: inset 0 0 0 1px var(--amber); }
+.speed.high:has(input:checked) { border-color: var(--red); box-shadow: inset 0 0 0 1px var(--red); }
+.speed.low b { color: var(--green); } .speed.medium b { color: var(--amber); } .speed.high b { color: var(--red); }
+.boards-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; margin-bottom: 10px; }
+.boards-head .hint { margin: 0; }
+#companiesCard .buttons + .buttons { margin-top: 8px; }
+#companiesCard .buttons input { flex: 1; min-width: 0; }
+.check { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
+.warn { color: var(--red); font-size: 12px; }
+.buttons { display: flex; gap: 8px; align-items: center; }
+.spacer { flex: 1; }
+button { font: inherit; font-weight: 600; border-radius: 99px; padding: 7px 16px; cursor: pointer; border: 1px solid transparent; }
+button:disabled { opacity: .45; cursor: default; }
+.primary { background: var(--accent); color: var(--card); padding: 8px 28px; }
+.secondary { background: transparent; color: var(--accent); border-color: var(--accent); }
+.danger { background: transparent; color: var(--red); border-color: var(--red); }
+.now { margin: 14px 0 8px; font-weight: 600; color: var(--accent); }
+.now.idle { color: var(--muted); }
+.table-wrap { border: 1px solid var(--line); border-radius: 8px; height: 300px; overflow: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { position: sticky; top: 0; background: var(--card); text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+td { padding: 6px 10px; border-bottom: 1px solid var(--line); max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: var(--accent-soft); }
+tbody tr.fresh { animation: flash 1.2s ease-out; }
+@keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
+pre#log { margin: 12px 0 0; height: 110px; overflow: auto; background: var(--input); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: 12px Consolas, monospace; white-space: pre-wrap; }
+@media (max-width: 680px) { .grid, .speeds, .sources { grid-template-columns: 1fr; } }
