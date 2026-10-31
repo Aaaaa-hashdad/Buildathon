@@ -1,0 +1,20 @@
+{
+  "name": "job-alert-pack",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Job Alert as Superhuman Go agents: a career-site connector plus Job Scout, Resume Tailor and Application Tracker.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "validate": "tsc --noEmit -p . && for p in connector agents/job-alert; do packs validate $p/pack.ts || exit 1; done"
+  },
+  "dependencies": {
+    "@superhuman/plugins-sdk": "1.19.0",
+    "fflate": "0.8.3",
+    "unpdf": "1.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "ts-node": "10.9.2",
+    "typescript": "5.6.3"
+  }
+}

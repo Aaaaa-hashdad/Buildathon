@@ -1,0 +1,5 @@
+node_modules/
+_upload_build/
+# Your API token and local test credentials: never commit or share them.
+.coda.json
+.coda-credentials.json

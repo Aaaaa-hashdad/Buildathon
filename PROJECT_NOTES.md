@@ -81,6 +81,16 @@ a personal token in `superhuman_token.txt`. Git ignores that file; never share i
 tables. If that fails, the user makes the table by hand. Rows are matched on Job URL. Status, Match % and Resume
 are only set on new rows. **Not tested yet: waiting on the user's token.**
 
+**Superhuman Go agent** (`pack/`, built 2026-10-31, see `pack/README.md`): the project as one Go agent on the
+Superhuman Packs SDK (`@superhuman/plugins-sdk`), made to send to other people with no setup on their side.
+A **Job Alert connector** (career-site search ported from `job_boards.py`, public APIs, no sign-in) and one
+**Job Alert agent** that finds jobs, tailors resumes (never invents) and tracks Status from email (drafts
+only, never sends). It was one agent instead of three so recipients install one thing. An agent may have only one
+schedule trigger, so the Monday follow-ups are part of the morning sweep. The connector was tested locally on live APIs
+(all 5 platforms, sync table, errors). The agent validates and builds, but **hasn't been uploaded yet**: that needs a token,
+Superhuman's multi-domain approval, and the connector's Pack ID pasted into `pack/agents/shared.ts`. The LinkedIn
+bot stays local only (account risk, and it needs the user's own Chrome).
+
 The old way MCP is registered: **`.mcp.json` in the parent project folder** (`Alert System\.mcp.json`) with an
 **absolute path** to `mcp_server.py`. **If you move this folder, update that path** (or create a new
 `.mcp.json` in the new project root).
