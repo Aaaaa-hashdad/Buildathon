@@ -4,6 +4,7 @@
 import * as sdk from "@superhuman/plugins-sdk";
 import { DEFAULT_COMPANIES, DOMAINS, ENABLED, findCompany, getJob, Job, requireBoard, searchBoard } from "./boards";
 import { readDocument } from "./documents";
+import { markdownToPdf } from "./pdf";
 
 export const pack = sdk.newPack();
 
@@ -177,6 +178,41 @@ pack.addFormula({
   }),
   execute: async function ([file], context) {
     return readDocument(context, file);
+  },
+});
+
+pack.addFormula({
+  name: "MakePdf",
+  description: "Turns a resume or cover letter written in simple Markdown into a clean PDF, and returns a link to it.",
+  parameters: [
+    sdk.makeParameter({
+      type: sdk.ParameterType.String,
+      name: "markdown",
+      description: "The document. '# Full Name' then the contact line under it; '## Section' headings; '### Role' lines; " +
+        "'- ' bullets; **bold**; blank lines between paragraphs. No title like 'Resume - Company - Job' inside it.",
+    }),
+    sdk.makeParameter({
+      type: sdk.ParameterType.String,
+      name: "fileName",
+      description: "The download name, e.g. 'Jordan Lee - Resume - MongoDB.pdf'.",
+    }),
+  ],
+  resultType: sdk.ValueType.Object,
+  schema: sdk.makeObjectSchema({
+    properties: {
+      file: { type: sdk.ValueType.String, codaType: sdk.ValueHintType.Attachment,
+        description: "The PDF. The link expires; saving it into a doc keeps it." },
+      fileName: { type: sdk.ValueType.String },
+      pages: { type: sdk.ValueType.Number },
+    },
+    displayProperty: "fileName",
+  }),
+  execute: async function ([markdown, fileName], context) {
+    const name = /\.pdf$/i.test(fileName) ? fileName : `${fileName}.pdf`;
+    const { bytes, pages } = await markdownToPdf(markdown, name.replace(/\.pdf$/i, ""));
+    const file = await context.temporaryBlobStorage.storeBlob(Buffer.from(bytes), "application/pdf",
+      { downloadFilename: name, expiryMs: 7 * 24 * 60 * 60 * 1000 });
+    return { file, fileName: name, pages };
   },
 });
 

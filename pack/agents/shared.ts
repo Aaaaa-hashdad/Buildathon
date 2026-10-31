@@ -4,6 +4,16 @@
 // connector/.coda-pack.json; paste it here before uploading the agents.
 export const JOB_ALERT_CONNECTOR_ID = 76714;
 
+// Superhuman's own writing connectors (made by Grammarly), which the agent runs on resumes and cover letters.
+export const WRITING_TOOLS = {
+  grammarly: 43834,
+  resumeBuilder: 48124,
+  aiRewriter: 50947,
+  humanizer: 45025,
+  aiDetector: 45020,
+  plagiarismChecker: 43882,
+};
+
 // The tracker every agent reads and writes. superhuman_docs.py (the desktop app's "Send to Superhuman
 // Docs" button) makes the same doc and table, so jobs from either side land in one place.
 export const TRACKER = `
@@ -15,10 +25,13 @@ Everything lives in the Superhuman Docs doc named "Job Alert". Create it if it's
   Status, Match % and Resume belong to the user once set: only change them when your task says to.
 - Table "Companies": Board (platform:id, e.g. greenhouse:stripe), Name. These are the career sites searched.
 - Pages "Master resume" (the only source of truth about the user) and "Cover letter base" (their own cover
-  letter, if they uploaded one).
+  letter, if they uploaded one). Tailored resumes and cover letters are PDFs in "Applications", not pages.
 - Page "Search plan": the titles, keywords and location the user is looking for.
 
 Writing to the doc:
+- The user approves every change you make to their doc, one tool call at a time, so make as few calls as you
+  can. Create the doc with all its pages and their content in one call. Add all of a search's new jobs to
+  "Applications" in one write, not one per job. Gather everything for a task first, then write once at the end.
 - Find the existing "Job Alert" doc and its pages before creating anything. Never make a second doc or a
   duplicate page.
 - Never leave a page empty. Create each page with its content in the same step, or write the content right
