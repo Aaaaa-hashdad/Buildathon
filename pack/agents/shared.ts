@@ -17,6 +17,15 @@ Everything lives in the Superhuman Docs doc named "Job Alert". Create it if it's
 - Pages "Master resume" (the only source of truth about the user) and "Cover letter base" (their own cover
   letter, if they uploaded one).
 - Page "Search plan": the titles, keywords and location the user is looking for.
+
+Writing to the doc:
+- Find the existing "Job Alert" doc and its pages before creating anything. Never make a second doc or a
+  duplicate page.
+- Never leave a page empty. Create each page with its content in the same step, or write the content right
+  after creating it. Then read the page back: if it's empty, write it again.
+- If you can't create a table, make "Applications" (or "Companies") a page instead, with one entry per job:
+  "**Job** at Company · Location · Status · [posting](Job URL)". Keep using whichever form exists.
+- Each time you change the doc, say what you added or changed in one line.
 `;
 
 // Rules agreed for the whole project (PROJECT_NOTES.md, "Rules we agreed on").
