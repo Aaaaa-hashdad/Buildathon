@@ -17,3 +17,16 @@ __pycache__/
 superhuman_token.txt
 superhuman.json
 mcp_web.json
+
+mcp_activity.log
+feed_cache/
+hunt_state.json
+
+jsearch_key.txt
+search_plan.json
+tunnel_state.json
+tunnel.log
+search_request.json
+app_alive.txt
+search_status.json
+app_log.txt

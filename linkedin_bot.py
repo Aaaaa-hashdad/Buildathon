@@ -17,6 +17,7 @@ import random
 import re
 import socket
 import threading
+import time
 import winsound
 from datetime import datetime
 from pathlib import Path
@@ -29,9 +30,15 @@ from playwright.sync_api import sync_playwright
 CDP_PORT = 9222
 CDP_URL = f"http://127.0.0.1:{CDP_PORT}"     # not "localhost": Windows tries IPv6 first and stalls
 OUTPUT_DIR = Path(__file__).parent / "output"
+PLAN_FILE = Path(__file__).parent / "search_plan.json"     # what the AI read from the resume: titles, keywords, place
 
 # Safety limits so LinkedIn doesn't flag the account.
-MAX_PAGES = 10              # ~100 people/companies per run
+SEARCH_REQUEST_FILE = Path(__file__).parent / "search_request.json"    # the AI asks; only the app runs LinkedIn
+APP_ALIVE_FILE = Path(__file__).parent / "app_alive.txt"               # touched by the open app every 2 seconds
+SEARCH_STATUS_FILE = Path(__file__).parent / "search_status.json"      # queued / running / done, for the AI to wait on
+AI_MAX_TITLES = 3           # most job titles an AI request may search, one after another
+AI_MAX_PAGES = 3            # most pages an AI request may ask for
+MAX_PAGES = 10             # ~100 people/companies per run
 MAX_JOBS = 100              # each job is a click + panel load, so cap these separately
 # Speed levels: random (min, max) seconds for each kind of pause.
 # Faster = more requests per minute = more chance LinkedIn notices.
@@ -365,7 +372,12 @@ def blocked(page):
     return any(m in page.url for m in BLOCK_MARKERS)
 
 
+problem = ""      # set when a run hit a security check or an empty page; an AI batch stops on it
+
+
 def alert(msg, log):
+    global problem
+    problem = msg
     log(f"!!! {msg}")
     for _ in range(3):
         winsound.Beep(1000, 300)
@@ -403,6 +415,101 @@ def chrome_running():
         return True
     except OSError:
         return False
+
+
+CHROME_EXE = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+
+
+def launch_chrome(hidden=False):
+    """Opens the bot's Chrome (its own profile, so the LinkedIn login is kept). Returns False if it was already open.
+
+    hidden=True puts the window far off screen instead of using headless mode: LinkedIn can tell headless
+    Chrome apart, but an ordinary window that nobody sees looks the same as any other. The extra flags stop
+    Chrome from slowing down a window it thinks is covered.
+    """
+    import subprocess
+    if chrome_running():
+        return False
+    args = [CHROME_EXE, f"--remote-debugging-port={CDP_PORT}", f"--user-data-dir={Path(__file__).parent / 'chrome-profile'}"]
+    if hidden:
+        args += ["--window-position=-32000,-32000", "--window-size=1280,900", "--no-first-run",
+                 "--disable-features=CalculateNativeWinOcclusion", "--disable-backgrounding-occluded-windows",
+                 "--disable-renderer-backgrounding", "--disable-background-timer-throttling", "about:blank"]
+    else:
+        args.append("https://www.linkedin.com/")
+    subprocess.Popen(args)
+    return True
+
+
+def wait_for_chrome(seconds=15):
+    for _ in range(int(seconds * 5)):
+        if chrome_running():
+            return True
+        time.sleep(0.2)
+    return False
+
+
+def page_failed(page):
+    """LinkedIn's "things aren't loading" error page, which a reload usually fixes. (An empty page is just the end.)"""
+    try:
+        txt = page.evaluate("() => document.body.innerText")
+    except Exception:
+        return False
+    return "things aren't loading" in txt
+
+
+PAGER_JS = r"""(n) => {
+  // Page numbers only exist once the end of the jobs list is on screen, so scroll the list down first.
+  const cards = document.querySelectorAll('[data-occludable-job-id], [componentkey^="job-card-component-ref-"]');
+  if (cards.length) cards[cards.length - 1].scrollIntoView({block: 'end'});
+  const mark = el => { el.scrollIntoView({block: 'center'}); el.setAttribute('data-bot-page', '1'); };
+  // The classic pager: <ul class="jobs-search-pagination__pages"> with one <li> per page number.
+  const items = [...document.querySelectorAll('[class*="jobs-search-pagination__pages"] li, [class*="jobs-search-pagination__indicator"]')];
+  for (const li of items) {
+    if (li.innerText.trim() === String(n)) { mark(li.querySelector('button, a') || li); return 'page list'; }
+  }
+  for (const sel of [`[data-test-pagination-page-btn="${n}"] button`, `button[aria-label="Page ${n}"]`,
+                     `a[aria-label="Page ${n}"]`, 'button[aria-label="View next page"]']) {
+    const el = document.querySelector(sel);
+    if (el) { mark(el); return sel; }
+  }
+  // A pager with page numbers but no page n: the search simply has fewer pages.
+  if (items.some(li => /^\d+$/.test(li.innerText.trim()))) return 'LAST';
+  return 'NONE ' + [...document.querySelectorAll('[class*="pagination"], [aria-label*="age"]')]
+    .slice(0, 6).map(e => e.tagName + ':' + (e.getAttribute('aria-label') || e.className).toString().slice(0, 60)).join(' | ');
+}"""
+
+
+def click_page_button(page, n, t, stop, log):
+    """Presses page n under the jobs list. True if it worked, so the caller doesn't need to load a URL."""
+    found = ""
+    for _ in range(4):      # the list may need a moment (and another scroll) to draw its page numbers
+        try:
+            found = page.evaluate(PAGER_JS, n)
+        except Exception:
+            found = "NONE"
+        if not found.startswith("NONE"):
+            break
+        human_pause((1.5, 2.5), stop)
+    if found == "LAST":
+        return "last"
+    if found.startswith("NONE"):
+        log(f"  no page {n} button found ({found[:200]}); loading the address instead.")
+        return False
+    try:
+        human_pause((1, 2), stop)
+        page.locator("[data-bot-page]").first.click(timeout=5000)
+    except Exception as e:
+        log(f"  couldn't press page {n} ({type(e).__name__}); loading the address instead.")
+        return False
+    finally:
+        try:
+            page.evaluate("() => document.querySelectorAll('[data-bot-page]').forEach(e => e.removeAttribute('data-bot-page'))")
+        except Exception:
+            pass
+    human_pause(t["load"], stop)
+    log(f"  pressed page {n} ({found}).")
+    return True
 
 
 def read_jobs_page(page, n, pages, rows, seen, stop, t, log, report, grab_links):
@@ -465,6 +572,8 @@ def run(kind, query, location, pages, log=print, stop=None, report=None, speed="
     speed is "low", "medium" or "high" (see SPEEDS).
     grab_apply_links (jobs only) clicks Apply to get company-site links LinkedIn hides.
     """
+    global problem
+    problem = ""
     t = SPEEDS[speed]
     stop = stop or threading.Event()
     report = report or (lambda k, v: None)
@@ -483,11 +592,26 @@ def run(kind, query, location, pages, log=print, stop=None, report=None, speed="
             for n in range(1, pages + 1):
                 log(f"Reading page {n}/{pages} ...")
                 report("status", f"Opening page {n}/{pages}")
-                page.goto(search_url(kind, query, location, n, classic), wait_until="domcontentloaded")
-                human_pause(t["load"], stop)
-
+                pressed = click_page_button(page, n, t, stop, log) if kind == "jobs" and n > 1 else False
+                if pressed == "last":
+                    log(f"  this search only has {n - 1} page(s) of results, so that's all of them.")
+                    break
+                if pressed:
+                    pass        # like a person: press "2" under the list, don't jump straight to ?start=25
+                else:
+                    page.goto(search_url(kind, query, location, n, classic), wait_until="domcontentloaded")
+                    human_pause(t["load"], stop)
                 if blocked(page):
                     raise Blocked
+                log(f"  opened {page.url[:140]}")
+                if kind == "jobs" and n > 1:
+                    for attempt in (1, 2):
+                        if not page_failed(page):
+                            break
+                        log(f"  LinkedIn says the results aren't loading; reloading (try {attempt}/2).")
+                        human_pause((6, 10), stop)
+                        page.reload(wait_until="domcontentloaded")
+                        human_pause(t["load"], stop)
 
                 # The new layout redirects to /jobs/search-results/; staying on /jobs/search/ means classic.
                 if kind == "jobs" and n == 1 and "/jobs/search-results" not in page.url:

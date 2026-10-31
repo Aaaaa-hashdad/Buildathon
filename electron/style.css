@@ -28,7 +28,7 @@ h2 { font-size: 15px; margin: 0 0 12px; display: flex; align-items: center; gap:
 .card:not([hidden]) > h2::before { counter-increment: step; content: counter(step); width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--card); font-size: 12px; display: grid; place-items: center; }
 .hint { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
 
-.sources { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sources { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .source { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; cursor: pointer; display: flex; flex-direction: column; gap: 3px; position: relative; }
 .source input { position: absolute; opacity: 0; }
 .source b { font-size: 15px; }
@@ -84,3 +84,11 @@ tbody tr.fresh { animation: flash 1.2s ease-out; }
 @keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
 pre#log { margin: 12px 0 0; height: 110px; overflow: auto; background: var(--input); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: 12px Consolas, monospace; white-space: pre-wrap; }
 @media (max-width: 680px) { .grid, .speeds, .sources { grid-template-columns: 1fr; } }
+
+/* "From your resume": what the AI read from the resume, as buttons that fill the search box */
+.chip-label { font-size: 12px; color: var(--muted); margin: 10px 0 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: var(--card); color: inherit; border-radius: 999px; padding: 4px 11px; font: inherit; font-size: 13px; cursor: pointer; }
+.chip:hover { border-color: var(--accent); }
+.chip.title { border-color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+.plan-note { margin: 0 0 4px; }

@@ -21,6 +21,7 @@ import html
 import json
 import re
 import threading
+import time
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from datetime import datetime, timezone
 from pathlib import Path
@@ -527,22 +528,62 @@ def import_from_results(log=print, files=None):
 
 # ---------- the run ----------
 
-def run(query, location="", log=print, stop=None, report=None, companies=None):
+_company_cache = {}         # (platform, id, place) -> (time, jobs); a hunt asks the same companies many times
+COMPANY_CACHE_MINUTES = 20
+
+
+def fetch_company(platform, slug, name, query, location, stop):
+    """One company's open jobs. Greenhouse, Lever, Ashby and Workable return everything whatever the query
+    is, so a repeat within COMPANY_CACHE_MINUTES reuses it. SmartRecruiters filters by place on the server."""
+    key = (platform, slug, location if platform == "smartrecruiters" else "")
+    hit = _company_cache.get(key)
+    if hit and time.time() - hit[0] < COMPANY_CACHE_MINUTES * 60:
+        return hit[1]
+    jobs = FETCHERS[platform](slug, name, query, location, stop)
+    if not stop.is_set():       # a Stop part-way can leave a partial list
+        _company_cache[key] = (time.time(), jobs)
+    return jobs
+
+
+def run(query, location="", log=print, stop=None, report=None, companies=None, seed=(), kind="boards", accept=None,
+        merge=False):
     """Checks every company in companies.txt and returns the saved Excel path (or None).
 
     report(kind, value) gets ("status", text) and ("row", row), same as linkedin_bot.run.
+    seed: rows already found elsewhere (the open sources); they come first and are saved in the same file.
+    accept(row): replaces the title + location test. merge: one row per company + title (cities are joined).
     """
     stop = stop or threading.Event()
     report = report or (lambda k, v: None)
     companies = companies if companies is not None else load_companies()
-    if not companies:
+    if not companies and not seed:
         log("companies.txt is empty. Add companies first (Add company, or Import from LinkedIn results).")
         return None
-    rows, seen = [], set()
+    rows, seen, by_title = [], set(), {}
+
+    def is_new(r):
+        # A repeat of a company + title only adds its place to the row already kept.
+        if r[12] in seen:
+            return False
+        seen.add(r[12])
+        if not merge:
+            return True
+        k = (re.sub(r"\W+", " ", r[0].lower()).strip(), (r[1] or "").lower())
+        if k not in by_title:
+            by_title[k] = r
+            return True
+        if r[2] and r[2] not in by_title[k][2]:
+            by_title[k][2] += "; " + r[2]
+        return False
+
+    for r in seed:
+        if is_new(r):
+            rows.append(r)
+            report("row", r)
     # Several companies at once (they're mostly on different servers). Results are handled as they
     # land, and Stop is checked every 0.2s instead of after the slowest company finishes.
     pool = ThreadPoolExecutor(COMPANY_WORKERS)
-    pending = {pool.submit(FETCHERS[p], s, n, query, location, stop): (p, s, n) for p, s, n in companies}
+    pending = {pool.submit(fetch_company, p, s, n, query, location, stop): (p, s, n) for p, s, n in companies}
     checked, stopped_by_user = 0, False
     report("status", f"Checking {len(companies)} companies")
     try:
@@ -565,11 +606,10 @@ def run(query, location="", log=print, stop=None, report=None, companies=None):
                 except (requests.RequestException, ValueError, KeyError) as e:
                     log(f"  {label}: couldn't read it ({type(e).__name__})")
                     continue
-                hits = [r for r in jobs if title_matches(r[0], query) and location_matches(r[2], r[3], location)
-                        and r[12] not in seen]
+                hits = [r for r in jobs if (accept(r) if accept else title_matches(r[0], query)
+                                            and location_matches(r[2], r[3], location)) and is_new(r)]
                 log(f"  {label}: {len(hits)} matching of {getattr(jobs, 'total', len(jobs))} open")
                 for r in hits[:MAX_ROWS - len(rows)]:
-                    seen.add(r[12])
                     rows.append(r)
                     report("row", r)
                 if len(rows) >= MAX_ROWS:
@@ -583,7 +623,7 @@ def run(query, location="", log=print, stop=None, report=None, companies=None):
         log("Stopped before any jobs came in." if stopped_by_user else
             "No matching jobs. Try fewer words in the search, a wider location, or more companies.")
         return None
-    path = bot.save("boards", query or "all", rows, columns=COLUMNS)
+    path = bot.save(kind, query or "all", rows, columns=COLUMNS)
     log(f"Saved {len(rows)} jobs -> {path}")
     return path
 

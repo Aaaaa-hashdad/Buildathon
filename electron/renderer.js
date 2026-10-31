@@ -4,14 +4,15 @@ const TABLE_COLS = {
   companies: ['Name', 'Industry / Location', 'Followers'],
   jobs: ['Title', 'Company', 'Location', 'Posted', 'Apply type'],
   boards: ['Title', 'Company', 'Location', 'Posted', 'Apply type'],
+  public: ['Title', 'Company', 'Location', 'Posted', 'Apply type'],
 };
 
 const $ = (id) => document.getElementById(id);
 let columns = [], linkCol = '', lastFile = null, lastKind = null, outputDir = null, running = false, companiesFile = null;
 
-// Career sites are one search type; LinkedIn has three (people, companies, jobs).
+// Career sites and public search are one search type each; LinkedIn has three (people, companies, jobs).
 const source = () => document.querySelector('input[name=source]:checked').value;
-const currentKind = () => (source() === 'boards' ? 'boards' : $('kind').value);
+const currentKind = () => (source() === 'linkedin' ? $('kind').value : source());
 
 function setHead(kind) {
   $('head').innerHTML = '';
@@ -72,7 +73,7 @@ function setRunning(on) {
 
 function showKind() {
   const linkedin = source() === 'linkedin';
-  for (const id of ['chromeCard', 'chrome', 'kindRow', 'pagesRow', 'speedRow']) $(id).hidden = !linkedin;
+  for (const id of ['chromeCard', 'chrome', 'kindRow', 'pagesRow', 'speedRow', 'hideRow']) $(id).hidden = !linkedin;
   $('companiesCard').hidden = linkedin;
   $('boardsHint').hidden = linkedin;
   $('grabRow').hidden = !(linkedin && $('kind').value === 'jobs');
@@ -83,6 +84,34 @@ function showKind() {
 }
 $('kind').addEventListener('change', showKind);
 for (const r of document.querySelectorAll('input[name=source]')) r.addEventListener('change', showKind);
+
+// The AI (Go, Claude) saves a plan from the resume; each chip puts that title or keyword in the search box.
+function showPlan(plan) {
+  const fill = (box, items, cls) => {
+    box.innerHTML = '';
+    for (const text of items || []) {
+      const b = document.createElement('button');
+      b.className = 'chip ' + cls;
+      b.textContent = text;
+      b.onclick = () => {
+        $('query').value = text;
+        if (plan.location) $('location').value = plan.location;
+        $('query').focus();
+      };
+      box.appendChild(b);
+    }
+  };
+  fill($('planTitles'), plan.titles, 'title');
+  fill($('planKeywords'), plan.keywords, 'keyword');
+  $('planNote').textContent = plan.note || '';
+  $('planMeta').textContent = [plan.location && `Place: ${plan.location}`, plan.updated && `Saved ${plan.updated}`]
+    .filter(Boolean).join(' · ');
+  $('planCard').hidden = !(plan.titles && plan.titles.length);
+  if (!$('query').value && plan.titles && plan.titles.length) {      // first plan: start the search box with the best title
+    $('query').value = plan.titles[0];
+    if (plan.location && !$('location').value) $('location').value = plan.location;
+  }
+}
 
 function addCompany() {
   const text = $('boardsAdd').value.trim();
@@ -134,6 +163,22 @@ $('mcpWebBtn').onclick = () => {
   window.bot.send({ cmd: 'mcp_web_start' });
 };
 
+// Superhuman Go wants the whole pack file, so this fills in the current URL: paste it over the old code.
+$('mcpPackBtn').onclick = () => {
+  if (!webUrl) return;
+  copyText(`import * as sdk from "@superhuman/plugins-sdk";
+
+export const pack = sdk.newPack();
+
+pack.addNetworkDomain("${new URL(webUrl).hostname}");
+
+pack.addMCPServer({
+  name: "JobAlert",
+  endpointUrl: "${webUrl}",
+});
+`, 'Go pack code');
+};
+
 $('mcpCopy').onclick = async () => {
   if (!mcpConfig) return;
   try {
@@ -145,7 +190,7 @@ $('mcpCopy').onclick = async () => {
 };
 
 // Jobs (LinkedIn or career sites) go to the Superhuman Docs tracker. The first click also sets the doc up.
-const canTrack = () => lastFile && (lastKind === 'jobs' || lastKind === 'boards');
+const canTrack = () => lastFile && ['jobs', 'boards', 'public'].includes(lastKind);
 let trackerLink = '';
 $('superhuman').onclick = () => {
   if (!canTrack()) return;
@@ -172,13 +217,14 @@ function start() {
   if (running) return;
   const query = $('query').value.trim();
   const kind = currentKind();
-  if (!query && kind !== 'boards') { log("Type something in 'Search for' first."); $('query').focus(); return; }
+  if (!query && kind !== 'boards' && kind !== 'public') { log("Type something in 'Search for' first."); $('query').focus(); return; }
   const speed = document.querySelector('input[name=speed]:checked').value;
   const msg = {
     cmd: 'start', kind, query, speed,
     location: $('location').value.trim(),
     pages: Math.max(1, Math.min(10, parseInt($('pages').value, 10) || 3)),
     grab_links: kind === 'jobs' && $('grab').checked,
+    hidden: kind !== 'boards' && kind !== 'public' && $('hide').checked,
   };
   setHead(kind);
   setRunning(true);
@@ -186,8 +232,8 @@ function start() {
   $('excel').disabled = true;
   $('linkedinImport').disabled = true;
   $('superhuman').disabled = true;
-  log(kind === 'boards'
-    ? `--- career sites: '${query || 'all jobs'}' ${msg.location} ---`
+  log(kind === 'boards' || kind === 'public'
+    ? `--- ${kind === 'public' ? 'public search' : 'career sites'}: '${query || 'all jobs'}' ${msg.location} ---`
     : `--- LinkedIn ${kind}: '${query}' ${msg.location} (${msg.pages} pages, ${speed} speed) ---`);
   window.bot.send(msg);
 }
@@ -210,14 +256,27 @@ window.bot.onEvent((ev) => {
       $('chrome').className = 'pill ' + (ev.connected ? 'on' : 'off');
       break;
     case 'columns': columns = ev.columns; linkCol = ev.link; break;
+    case 'plan': showPlan(ev); break;
+    case 'ai_search':     // the AI asked; the app fills the form and presses Start with the user's own speed settings
+      if (running) { log('The AI asked for a LinkedIn search, but one is already running.'); break; }
+      document.querySelector('input[name=source][value="linkedin"]').checked = true;
+      $('kind').value = 'jobs';
+      showKind();
+      $('query').value = ev.query;
+      $('location').value = ev.location;
+      $('pages').value = ev.pages;
+      start();
+      break;
     case 'mcp_web':
-      webUrl = ev.url || '';
-      $('mcpWebBtn').disabled = false;
-      $('mcpWebBtn').textContent = webUrl ? 'Copy URL' : 'Start web mode';
+      webUrl = ev.public ? ev.url : '';     // only a public https URL works for claude.ai / Go
+      $('mcpWebBtn').disabled = ev.running && !ev.public;
+      $('mcpPackBtn').disabled = !webUrl;
+      $('mcpWebBtn').textContent = webUrl ? 'Copy URL' : ev.running ? 'Opening tunnel…' : 'Start web mode';
       $('mcpWeb').textContent = webUrl
-        ? 'On. Copy the URL into Go > Connectors > Add custom MCP. Treat it like a password.'
-        : 'Needs a URL: start web mode, then paste the URL in Go > Connectors > Add custom MCP. ' +
-          'No LinkedIn tools, and only while this app is open.';
+        ? 'On. Paste the URL into claude.ai > Connectors > Add custom connector, or Go > Connectors. ' +
+          'Treat it like a password; it changes each time the app restarts.'
+        : ev.running ? 'Opening a public address for this PC…'
+        : 'Gives a public URL for claude.ai or Go custom connectors. No LinkedIn tools (LinkedIn stays in the app), and it only works while this app is open.';
       $('mcpWeb').className = 'hint' + (webUrl ? ' ok' : '');
       break;
     case 'mcp':

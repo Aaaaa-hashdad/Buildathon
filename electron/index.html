@@ -15,30 +15,16 @@
     </svg>
     <div class="title">
       <h1>Job Alert</h1>
-      <span class="sub">Jobs from company career sites and LinkedIn, saved to Excel</span>
+      <span class="sub">People, companies and jobs from LinkedIn, saved to Excel</span>
     </div>
     <span id="chrome" class="pill off" hidden>Chrome not open</span>
     <button id="goAi" class="secondary" title="Connect the bot to Claude Desktop, Claude Code or other AI apps">Connect AI</button>
   </header>
 
   <main>
-    <section class="card">
-      <h2>Where to search</h2>
-      <div class="sources" role="radiogroup" aria-label="Where to search">
-        <label class="source">
-          <input type="radio" name="source" value="boards" checked>
-          <b>Company career sites</b>
-          <small>Greenhouse · Lever · Ashby · Workable · SmartRecruiters</small>
-          <span class="tag safe">No login · no account risk</span>
-        </label>
-        <label class="source">
-          <input type="radio" name="source" value="linkedin">
-          <b>LinkedIn</b>
-          <small>People, companies and jobs, read in your own Chrome</small>
-          <span class="tag risky">Uses your account · go slow</span>
-        </label>
-      </div>
-    </section>
+    <!-- Only LinkedIn for now. The career-site and public-search cards are gone from the page, but backend.py and
+         renderer.js still handle them: add a radio with value="boards" or "public" here to bring one back. -->
+    <input type="radio" name="source" value="linkedin" checked hidden>
 
     <section class="card" id="chromeCard" hidden>
       <h2>Open Chrome and log into LinkedIn</h2>
@@ -63,6 +49,16 @@
       <p class="hint">Each search checks every company on this list. Import takes the companies from your
         LinkedIn job searches and adds the ones that post on these 5 sites. The first import takes about a minute;
         after that only new names are checked. Companies on Workday, iCIMS and the like can't be added yet.</p>
+    </section>
+
+    <section class="card" id="planCard" hidden>
+      <h2>From your resume</h2>
+      <p id="planNote" class="hint plan-note"></p>
+      <div class="chip-label">Job titles <span class="opt">(click one to search for it)</span></div>
+      <div id="planTitles" class="chips"></div>
+      <div class="chip-label">Keywords <span class="opt">(skills the AI found; click to search for one)</span></div>
+      <div id="planKeywords" class="chips"></div>
+      <p id="planMeta" class="hint"></p>
     </section>
 
     <section class="card">
@@ -93,6 +89,11 @@
         <label class="speed medium"><input type="radio" name="speed" value="medium" checked><b>Medium</b><small>~1s per action · careful</small></label>
         <label class="speed high"><input type="radio" name="speed" value="high"><b>High</b><small>quick · higher ban risk</small></label>
       </div>
+
+      <label id="hideRow" class="check">
+        <input type="checkbox" id="hide" checked>
+        Hide the Chrome window while it works <span class="opt">(log in once with 'Open Chrome' first)</span>
+      </label>
 
       <label id="grabRow" class="check" hidden>
         <input type="checkbox" id="grab">
@@ -139,9 +140,10 @@
         <button id="mcpCodeBtn" class="secondary">Connect</button>
       </div>
       <div class="ai-row">
-        <div><b>Superhuman Go</b><span id="mcpWeb" class="hint">Needs a URL: start web mode, then paste the URL
-          in Go &gt; Connectors &gt; Add custom MCP. No LinkedIn tools, and only while this app is open.</span></div>
+        <div><b>claude.ai / Superhuman Go</b><span id="mcpWeb" class="hint">Needs a URL: start web mode, then paste the URL
+          in Go &gt; Connectors &gt; Add custom MCP. No LinkedIn tools (LinkedIn stays in the app), and only works while this app is open.</span></div>
         <button id="mcpWebBtn" class="secondary">Start web mode</button>
+        <button id="mcpPackBtn" class="secondary" disabled title="Superhuman Go: copies the whole pack code with the current URL filled in">Copy Go pack</button>
       </div>
       <div class="ai-row">
         <div><b>Other apps</b><span class="hint">Any app that takes an MCP config (command + args)</span></div>
