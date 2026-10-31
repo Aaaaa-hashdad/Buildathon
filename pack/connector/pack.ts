@@ -2,7 +2,7 @@
 // Public job-board APIs only, so no sign-in. Which platforms are on is set by ENABLED in boards.ts.
 
 import * as sdk from "@superhuman/plugins-sdk";
-import { DOMAINS, ENABLED, findCompany, getJob, Job, requireBoard, searchBoard } from "./boards";
+import { DEFAULT_COMPANIES, DOMAINS, ENABLED, findCompany, getJob, Job, requireBoard, searchBoard } from "./boards";
 import { readDocument } from "./documents";
 
 export const pack = sdk.newPack();
@@ -38,10 +38,11 @@ const JobSchema = sdk.makeObjectSchema({
 const CompanySchema = sdk.makeObjectSchema({
   properties: {
     board: { type: sdk.ValueType.String, description: "platform:id, to pass to SearchJobs." },
+    name: { type: sdk.ValueType.String, description: "The company name the board reports." },
     platform: { type: sdk.ValueType.String },
     slug: { type: sdk.ValueType.String },
     openJobs: { type: sdk.ValueType.Number },
-    verified: { type: sdk.ValueType.Boolean, description: "False when the board was guessed from a name." },
+    verified: { type: sdk.ValueType.Boolean, description: "True for a job link, or when the board's own name matches. False = check with the user." },
   },
   displayProperty: "board",
 });
@@ -50,6 +51,13 @@ const companiesParam = sdk.makeParameter({
   type: sdk.ParameterType.StringArray,
   name: "companies",
   description: "Company boards as platform:id (greenhouse:stripe, lever:spotify) or careers links. FindCompany looks one up by name.",
+});
+const searchCompaniesParam = sdk.makeParameter({
+  type: sdk.ParameterType.StringArray,
+  name: "companies",
+  description: "Company boards as platform:id (greenhouse:stripe) or careers links. Leave empty to search about 55 " +
+    "well-known employers in tech, aerospace, civil engineering, finance and health.",
+  optional: true,
 });
 const queryParam = sdk.makeParameter({
   type: sdk.ParameterType.String,
@@ -64,22 +72,21 @@ const locationParam = sdk.makeParameter({
   optional: true,
 });
 
-// Agents read results into their context, so descriptions are left out unless asked for.
-function brief(jobs: Job[], includeDescription: boolean): Job[] {
-  return includeDescription ? jobs : jobs.map(j => ({ ...j, description: j.description.slice(0, 300) }));
-}
+// Full descriptions are one request each, so only this many come back with them; GetJob has the rest.
+const MAX_DESCRIPTIONS = 25;
 
 pack.addFormula({
   name: "SearchJobs",
-  description: "Open jobs at the given companies whose title has every search word. Searches each company's career site.",
+  description: "Open jobs whose title has every search word, from each company's career site. With no companies, " +
+    "searches a built-in list of well-known employers.",
   parameters: [
-    companiesParam,
+    searchCompaniesParam,
     queryParam,
     locationParam,
     sdk.makeParameter({
       type: sdk.ParameterType.Boolean,
       name: "includeDescription",
-      description: "Return full descriptions. Off by default: only the first 300 characters. Use GetJob for one job's full text.",
+      description: "Return full descriptions for up to 25 jobs. Off by default. Use GetJob for one job's full text.",
       optional: true,
     }),
     sdk.makeParameter({
@@ -91,9 +98,11 @@ pack.addFormula({
   ],
   resultType: sdk.ValueType.Array,
   items: JobSchema,
-  execute: async function ([companies, query = "", location = "", includeDescription = false, limit = 100], context) {
+  execute: async function ([companies = [], query = "", location = "", includeDescription = false, limit = 100], context) {
+    const boards = companies.length ? companies : DEFAULT_COMPANIES;
+    // Titles first; descriptions only for the jobs that make the cut.
     const results = await Promise.allSettled(
-      companies.map(async c => searchBoard(context, requireBoard(c), query, location, limit)));
+      boards.map(async c => searchBoard(context, requireBoard(c), query, location, limit, false)));
     const perCompany = results.map(r => (r.status === "fulfilled" ? r.value : []));
     const failed = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
     if (failed.length === results.length) {
@@ -105,7 +114,12 @@ pack.addFormula({
     for (let i = 0; jobs.length < limit && perCompany.some(list => i < list.length); i++) {
       perCompany.forEach(list => i < list.length && jobs.push(list[i]));
     }
-    return brief(jobs.slice(0, limit), includeDescription);
+    const picked = jobs.slice(0, limit);
+    if (!includeDescription) {
+      return picked.map(j => ({ ...j, description: j.description.slice(0, 300) }));
+    }
+    const full = await Promise.allSettled(picked.slice(0, MAX_DESCRIPTIONS).map(j => getJob(context, j.id)));
+    return full.map((r, i) => (r.status === "fulfilled" ? r.value : picked[i])).concat(picked.slice(MAX_DESCRIPTIONS));
   },
 });
 

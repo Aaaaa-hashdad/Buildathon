@@ -164,24 +164,28 @@ export function locationMatches(location: string, workplace: string, wanted: str
 // ---------- one fetcher per platform ----------
 // Each returns every open job for the company; matching happens afterwards in searchBoard().
 
-async function fetchGreenhouse(context: sdk.ExecutionContext, board: Board): Promise<Job[]> {
-  const data = await getJson(context, `https://boards-api.greenhouse.io/v1/boards/${board.slug}/jobs`, { content: "true" });
-  return data.jobs.map((j: any) => {
-    const loc = j.location?.name || "";
-    return job(board, j.id, {
-      title: j.title,
-      company: j.company_name || pretty(board.slug),
-      location: loc,
-      workplace: workplaceOf(loc),
-      type: "",
-      posted: day(j.first_published || j.updated_at),
-      salary: "",
-      department: (j.departments || []).map((d: any) => d.name).join(", "),
-      applyLink: `https://job-boards.greenhouse.io/${board.slug}/jobs/${j.id}`,
-      jobUrl: j.absolute_url,
-      description: toText(j.content),
-    });
+function greenhouseJob(board: Board, j: any): Job {
+  const loc = j.location?.name || "";
+  return job(board, j.id, {
+    title: j.title,
+    company: j.company_name || pretty(board.slug),
+    location: loc,
+    workplace: workplaceOf(loc),
+    type: "",
+    posted: day(j.first_published || j.updated_at),
+    salary: "",
+    department: (j.departments || []).map((d: any) => d.name).join(", "),
+    applyLink: `https://job-boards.greenhouse.io/${board.slug}/jobs/${j.id}`,
+    jobUrl: j.absolute_url,
+    description: toText(j.content),
   });
+}
+
+// Without content the list is a fraction of the size, which is what lets one search cover dozens of companies.
+async function fetchGreenhouse(context: sdk.ExecutionContext, board: Board, withContent = true): Promise<Job[]> {
+  const data = await getJson(context, `https://boards-api.greenhouse.io/v1/boards/${board.slug}/jobs`,
+    withContent ? { content: "true" } : {});
+  return data.jobs.map((j: any) => greenhouseJob(board, j));
 }
 
 async function fetchLever(context: sdk.ExecutionContext, board: Board): Promise<Job[]> {
@@ -341,7 +345,7 @@ async function searchSmartRecruiters(context: sdk.ExecutionContext, board: Board
   return Promise.all(matches.map(p => srDetail(context, board, p.id, p)));
 }
 
-const FETCHERS: Record<string, (context: sdk.ExecutionContext, board: Board) => Promise<Job[]>> = {
+const FETCHERS: Record<string, (context: sdk.ExecutionContext, board: Board, withContent?: boolean) => Promise<Job[]>> = {
   greenhouse: fetchGreenhouse,
   lever: fetchLever,
   ashby: fetchAshby,
@@ -350,11 +354,11 @@ const FETCHERS: Record<string, (context: sdk.ExecutionContext, board: Board) => 
 
 /** Open jobs at one company whose title and location match. */
 export async function searchBoard(context: sdk.ExecutionContext, board: Board, query = "", location = "",
-  limit = 100): Promise<Job[]> {
+  limit = 100, withContent = true): Promise<Job[]> {
   if (board.platform === "smartrecruiters") {
     return searchSmartRecruiters(context, board, query, location, limit);
   }
-  const jobs = await FETCHERS[board.platform](context, board);
+  const jobs = await FETCHERS[board.platform](context, board, withContent);
   return jobs.filter(j => titleMatches(j.title, query) && locationMatches(j.location, j.workplace, location))
     .slice(0, limit);
 }
@@ -371,6 +375,17 @@ export async function getJob(context: sdk.ExecutionContext, id: string): Promise
   if (board.platform === "smartrecruiters") {
     return srDetail(context, board, jobId);
   }
+  if (board.platform === "greenhouse") {
+    try {
+      return greenhouseJob(board, await getJson(context,
+        `https://boards-api.greenhouse.io/v1/boards/${slug}/jobs/${jobId}`));
+    } catch (e) {
+      if (!(e instanceof NotFound)) {
+        throw e;
+      }
+      throw new sdk.UserVisibleError(`That job (${id}) isn't listed anymore. It may have been filled or taken down.`);
+    }
+  }
   const found = (await FETCHERS[board.platform](context, board)).find(j => j.id === id);
   if (!found) {
     throw new sdk.UserVisibleError(`That job (${id}) isn't listed anymore. It may have been filled or taken down.`);
@@ -379,6 +394,23 @@ export async function getJob(context: sdk.ExecutionContext, id: string): Promise
 }
 
 // ---------- companies ----------
+
+// Employers searched when the user hasn't picked any: all on Greenhouse, checked open on 2026-10-31.
+export const DEFAULT_COMPANIES = [
+  // Software and internet
+  "stripe", "airbnb", "figma", "discord", "reddit", "pinterest", "lyft", "instacart", "gitlab", "cloudflare",
+  "datadog", "mongodb", "elastic", "twilio", "asana", "squarespace", "duolingo", "dropbox", "okta", "zscaler",
+  "samsara", "toast", "databricks", "anthropic", "scaleai", "roblox", "epicgames", "riotgames", "nextdoor",
+  // Aerospace, defense, robotics and hardware
+  "spacex", "andurilindustries", "relativity", "rocketlab", "waymo", "nuro", "formlabs",
+  // Civil and environmental engineering
+  "woolpert", "bgeinc", "langanengineeringandenvironmentalservicesllc",
+  // Finance
+  "robinhood", "coinbase", "brex", "chime", "affirm", "sofi", "block", "gusto", "carta", "jumptrading",
+  "janestreet", "point72",
+  // Health and consumer
+  "oscar", "flatironhealth", "glossier", "sweetgreen",
+].map(slug => `greenhouse:${slug}`);
 
 // Careers links that reveal the platform and the company's ID on it.
 const BOARD_URLS: Array<[string, RegExp]> = [
@@ -464,14 +496,34 @@ function idGuesses(name: string): string[] {
 
 export interface FoundBoard extends Board {
   board: string;
+  name: string;
   openJobs: number;
   verified: boolean;
 }
 
+/** The company name a board reports, for the platforms that report one. */
+async function boardName(context: sdk.ExecutionContext, board: Board): Promise<string> {
+  try {
+    if (board.platform === "greenhouse") {
+      return (await getJson(context, `https://boards-api.greenhouse.io/v1/boards/${board.slug}`)).name || "";
+    }
+    if (board.platform === "workable") {
+      return (await getJson(context, `https://apply.workable.com/api/v1/widget/accounts/${board.slug}`)).name || "";
+    }
+  } catch (e) {
+    // No name to check against; the board stays unverified.
+  }
+  return "";
+}
+
+function firstWord(name: string): string {
+  return (name.toLowerCase().match(/[a-z0-9]+/g) || []).find(w => !COMPANY_SUFFIXES.has(w)) || "";
+}
+
 /**
  * The company's board on each platform. A link is exact. A name is guessed ("Hugging Face" ->
- * huggingface, hugging-face), only counts with at least one open job, and is marked unverified:
- * a short guess like "hdr" can belong to some other company.
+ * huggingface, hugging-face) and only counts with at least one open job. A guess is verified when the
+ * board reports a name starting with the same word, so "hdr" can't land on some other company's board.
  */
 export async function findCompany(context: sdk.ExecutionContext, nameOrLink: string): Promise<FoundBoard[]> {
   const exact = parseBoard(nameOrLink);
@@ -482,14 +534,23 @@ export async function findCompany(context: sdk.ExecutionContext, nameOrLink: str
   }
   const counts = await Promise.all(candidates.map(b => openJobs(context, b)));
   const seen = new Set<string>();
-  const out: FoundBoard[] = [];
+  const found: Board[] = [];
+  const jobs: number[] = [];
   candidates.forEach((b, i) => {
     const key = `${b.platform}:${b.slug.toLowerCase()}`;
     if (counts[i] > 0 && !seen.has(key)) {
       seen.add(key);
-      out.push({ ...b, board: `${b.platform}:${b.slug}`, openJobs: counts[i],
-        verified: Boolean(exact) });
+      found.push(b);
+      jobs.push(counts[i]);
     }
   });
-  return out;
+  const names = await Promise.all(found.map(b => boardName(context, b)));
+  const wanted = firstWord(nameOrLink);
+  return found.map((b, i) => ({
+    ...b,
+    board: `${b.platform}:${b.slug}`,
+    name: names[i] || pretty(b.slug),
+    openJobs: jobs[i],
+    verified: Boolean(exact) || (Boolean(names[i]) && firstWord(names[i]) === wanted),
+  }));
 }
