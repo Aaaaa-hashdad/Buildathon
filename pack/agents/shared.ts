@@ -4,40 +4,33 @@
 // connector/.coda-pack.json; paste it here before uploading the agents.
 export const JOB_ALERT_CONNECTOR_ID = 76714;
 
-// Superhuman's own writing connectors (made by Grammarly), which the agent runs on resumes and cover letters.
-export const WRITING_TOOLS = {
-  grammarly: 43834,
-  resumeBuilder: 48124,
-  aiRewriter: 50947,
-  humanizer: 45025,
-  aiDetector: 45020,
-  plagiarismChecker: 43882,
-};
+// Superhuman's Google Docs connector: tailored resumes and cover letters are saved as Google Docs, which the
+// user can download as PDFs. (Files the Job Alert connector makes can't be handed to the user from Go.)
+export const GOOGLE_DOCS_PACK_ID = 68620;
 
 // The tracker every agent reads and writes. superhuman_docs.py (the desktop app's "Send to Superhuman
 // Docs" button) makes the same doc and table, so jobs from either side land in one place.
 export const TRACKER = `
 ## The tracker
-Everything lives in the Superhuman Docs doc named "Job Alert". Create it if it's missing.
-- Table "Applications", one row per job, matched on Job URL (never add a job twice):
-  Job, Company, Location, Posted, Salary, Source, Apply link, Job URL, Status, Match %, Resume, Added.
+Everything lives on ONE page: the first page of the Superhuman Docs doc named "Job Alert". No other pages.
+The page has these sections, in this order:
+- "## Search plan": the titles, keywords and location the user is looking for.
+- "## Applications": a table, one row per job, matched on Job URL (never add a job twice), with columns
+  Job, Company, Location, Posted, Source, Job URL, Status, Match %, Resume, Added.
   Status is one of: Found, Tailored, Ready, Applied, Interview, Offer, Rejected, Withdrawn.
   Status, Match % and Resume belong to the user once set: only change them when your task says to.
-- Table "Companies": Board (platform:id, e.g. greenhouse:stripe), Name. These are the career sites searched.
-- Pages "Master resume" (the only source of truth about the user) and "Cover letter base" (their own cover
-  letter, if they uploaded one). Tailored resumes and cover letters are PDFs in "Applications", not pages.
-- Page "Search plan": the titles, keywords and location the user is looking for.
+- "## Companies": the career-site boards searched (platform:id, e.g. greenhouse:stripe), if the user picked any.
+- "## Master resume": the user's whole resume, word for word. The only source of truth about them.
+- "## Cover letter base": their own cover letter, if they uploaded one.
+Tailored resumes and cover letters are Google Docs linked from "Applications", never pages.
 
 Writing to the doc:
-- The user approves every change you make to their doc, one tool call at a time, so make as few calls as you
-  can. Create the doc with all its pages and their content in one call. Add all of a search's new jobs to
-  "Applications" in one write, not one per job. Gather everything for a task first, then write once at the end.
-- Find the existing "Job Alert" doc and its pages before creating anything. Never make a second doc or a
-  duplicate page.
-- Never leave a page empty. Create each page with its content in the same step, or write the content right
-  after creating it. Then read the page back: if it's empty, write it again.
-- If you can't create a table, make "Applications" (or "Companies") a page instead, with one entry per job:
-  "**Job** at Company · Location · Status · [posting](Job URL)". Keep using whichever form exists.
+- The user approves every change you make to their doc, one tool call at a time, so keep it to the fewest calls:
+  first time, create the doc, then write the whole page (title "Job Alert", every section filled) in one
+  update. That's two approvals in total. After that, one update per task: gather everything first (all the new
+  jobs, the status changes, the resume link), then write the page once at the end.
+- Before creating anything, look for the existing "Job Alert" doc. Never make a second doc or another page.
+- Never write a section, then write again to fill it. One write with everything in it.
 - Each time you change the doc, say what you added or changed in one line.
 `;
 
