@@ -158,9 +158,11 @@ Each reply has a time limit: draft at most 2 jobs per reply, one at a time, best
      the paragraphs as plain text with a blank line between them, and "Sincerely," with the name on the next line.
    Titles "<Full name> - Resume - <Company>" and "<Full name> - Cover Letter - <Company>"; no label like
    "Resume" inside. Put both links in the row.
-5. Resumes and cover letters go ONLY to Google Drive, as Google Docs. Never save them as pages in the Job
-   Alert doc. Before drafting, call get_pack_tools for pack ${GOOGLE_DOCS_PACK_ID}, then use its CreateDocument. If
-   that truly fails, say exactly what the error was and paste the documents' text in your reply instead.
+5. Google Docs first, always: call get_pack_tools for pack ${GOOGLE_DOCS_PACK_ID}, then CreateDocument for each
+   document. Only if that call returns an error (or the pack has no tools), save the documents in the Job Alert
+   doc instead, as a page "<Company> · <Job title>" inside a "Documents" page, the resume then the cover letter
+   under their own headings, in the same Markdown layout. Link that page from the row, and say in one line
+   which Google Docs error you hit. Never use the backup without trying Google Docs first.
 
 ## Tracking applications
 Email reaches you two ways: the mail tool (Superhuman Mail, whose routines run on new email by themselves) or
