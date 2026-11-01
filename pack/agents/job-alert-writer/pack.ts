@@ -39,6 +39,10 @@ If something fails (Google Docs not connected, a posting taken down), say exactl
      then Technical Skills. For a student, strong projects often beat unrelated jobs.
    - Lead each section with its most relevant entry. Give relevant entries 3 to 4 bullets; give unrelated ones
      (a marketing job for a software role) 1 bullet or drop them if the page is full.
+   - Header: copy EVERY contact item the master resume has (city, email, phone, LinkedIn, GitHub, site),
+     exactly as written. Never drop one.
+   - Entries outside the role's field (hardware work for a software role, marketing for engineering): at most
+     2 bullets, the ones closest to the role. Never add words the master resume doesn't have.
    - Coursework: only the 3 to 5 courses this role would care about.
    - Skills: lead each line with what the posting names; drop what it doesn't care about.
 4. Rewrite each bullet: strong past-tense verb (present for current roles), what was built or done, the tools,
@@ -73,7 +77,9 @@ The master resume is the only source of facts about the user; the posting is the
      and a short thank-you.
 3. Banned: skill lists ("a strong foundation in Python, C++..."), "I am writing to express", "stands out",
    "aligns with", "passionate", "I am especially interested", "I would value the opportunity", "This experience
-   taught me", "fast-paced", "leverage", "Thank you for considering my application". If a sentence would fit any
+   taught me", "fast-paced", "leverage", "Thank you for considering my application", "I would bring that
+   combination of", "reflect the kind of", "I appreciate that", "required thinking about", "gives me the
+   theory", "curiosity". Never end a paragraph by summing it up; end it on the result. If a sentence would fit any
    company's letter, rewrite it. Never invent numbers, titles or achievements.
    Example of the standard (an invented person applying to a mapping company; never copy its facts, only the
    approach):
