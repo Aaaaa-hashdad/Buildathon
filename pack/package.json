@@ -5,7 +5,7 @@
   "description": "Job Alert as Superhuman Go agents: a career-site connector plus Job Scout, Resume Tailor and Application Tracker.",
   "scripts": {
     "typecheck": "tsc --noEmit -p .",
-    "validate": "tsc --noEmit -p . && for p in connector agents/job-alert; do packs validate $p/pack.ts || exit 1; done"
+    "validate": "tsc --noEmit -p . && for p in connector agents/job-alert agents/job-alert-writer; do packs validate $p/pack.ts || exit 1; done"
   },
   "dependencies": {
     "@superhuman/plugins-sdk": "1.19.0",
