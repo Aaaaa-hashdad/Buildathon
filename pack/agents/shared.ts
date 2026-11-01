@@ -17,7 +17,8 @@ Everything lives in the Superhuman Docs doc named "Job Alert". Create it if it's
   Job, Company, Location, Posted, Salary, Source, Apply link, Job URL, Status, Match %, Resume, Cover letter, Added.
   Status is one of: Found, Tailored, Ready, Applied, Interview, Offer, Rejected, Withdrawn.
   Status, Match % and Resume belong to the user once set: only change them when your task says to.
-- Table "Companies": Board (platform:id, e.g. greenhouse:stripe), Name. These are the career sites searched.
+- Table "Companies": Name, Board (platform:id, e.g. greenhouse:stripe). Only employers the user asked you to
+  watch. Never copy companies from search results into it. Searches cover the built-in employers plus these.
 - Page "Search plan": the titles, keywords and location the user is looking for.
 - Page "Master resume": the user's whole resume, word for word. The only source of truth about them.
 - Page "Cover letter base": their own cover letter, if they uploaded one.

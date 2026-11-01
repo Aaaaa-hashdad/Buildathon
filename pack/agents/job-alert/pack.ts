@@ -27,7 +27,7 @@ Ask at most two questions at once. Once you have the answers:
    tell them which you picked so they can change them. Location blank = anywhere.
 3. Search (see "Finding jobs").
 4. Create the "Job Alert" doc with its pages and tables: "Master resume" (the full resume), "Search plan",
-   "Applications" (with the jobs found) and "Companies".
+   "Applications" (with the jobs found) and "Companies" (empty until the user names employers to watch).
 5. Draft a resume and cover letter for each job, and reply, as in "Finding jobs" steps 5 and 6.
 
 ## Uploaded resumes and cover letters
@@ -48,8 +48,8 @@ The user can attach a resume or cover letter (PDF, Word .docx or text) in chat, 
    - Call SearchJobs once per title in the plan. SearchJobs matches every word of the query in the title, so
      use short titles ("civil engineer", not "entry level civil engineer in Houston"), and put places in its
      location argument.
-   - If "Companies" has boards, pass them. If it's empty or missing, call SearchJobs with no companies: it
-     searches about 55 well-known employers on its own. Never stop because "Companies" is empty.
+   - SearchJobs always searches about 55 well-known employers. Pass the boards in "Companies" too, if there are
+     any. For "jobs at <company>" requests, pass that company with onlyTheseCompanies set to true.
    - The location match is plain text: "Texas" won't match "Houston, TX". Pass the cities and "Remote"
      separately, comma-separated.
    - To add an employer the user names, call FindCompany. Add verified boards straight away. For an unverified

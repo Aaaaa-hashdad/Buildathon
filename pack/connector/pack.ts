@@ -57,8 +57,8 @@ const companiesParam = sdk.makeParameter({
 const searchCompaniesParam = sdk.makeParameter({
   type: sdk.ParameterType.StringArray,
   name: "companies",
-  description: "Company boards as platform:id (greenhouse:stripe) or careers links. Leave empty to search about 55 " +
-    "well-known employers in tech, aerospace, civil engineering, finance and health.",
+  description: "Extra company boards as platform:id (greenhouse:stripe) or careers links. About 55 well-known " +
+    "employers in tech, aerospace, civil engineering, finance and health are always searched as well.",
   optional: true,
 });
 const queryParam = sdk.makeParameter({
@@ -79,8 +79,8 @@ const MAX_DESCRIPTIONS = 25;
 
 pack.addFormula({
   name: "SearchJobs",
-  description: "Open jobs whose title has every search word, from each company's career site. With no companies, " +
-    "searches a built-in list of well-known employers.",
+  description: "Open jobs whose title has every search word, from each company's career site: a built-in list of " +
+    "well-known employers plus any companies given.",
   parameters: [
     searchCompaniesParam,
     queryParam,
@@ -97,11 +97,20 @@ pack.addFormula({
       description: "Most jobs to return, 100 by default.",
       optional: true,
     }),
+    sdk.makeParameter({
+      type: sdk.ParameterType.Boolean,
+      name: "onlyTheseCompanies",
+      description: "Search only the companies given, not the built-in employers too. For 'jobs at SpaceX'-type asks.",
+      optional: true,
+    }),
   ],
   resultType: sdk.ValueType.Array,
   items: JobSchema,
-  execute: async function ([companies = [], query = "", location = "", includeDescription = false, limit = 100], context) {
-    const boards = companies.length ? companies : DEFAULT_COMPANIES;
+  execute: async function ([companies = [], query = "", location = "", includeDescription = false, limit = 100,
+    onlyTheseCompanies = false], context) {
+    // The built-in employers are always searched; the user's own companies are added to them.
+    const boards = onlyTheseCompanies && companies.length ? companies
+      : [...new Set([...companies, ...DEFAULT_COMPANIES])];
     // Titles first; descriptions only for the jobs that make the cut.
     const results = await Promise.allSettled(
       boards.map(async c => searchBoard(context, requireBoard(c), query, location, limit, false)));
