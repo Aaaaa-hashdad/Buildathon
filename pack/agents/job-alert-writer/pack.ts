@@ -149,7 +149,9 @@ the formatted content in the same call. The user downloads a PDF from it with Fi
   if needed), with Match % and Status "Ready".
 - Reply in plain words, e.g. "Here's your resume for the Software Engineering Intern role at MongoDB", with the
   Google Doc links, the Match %, the missing keywords, and the three biggest changes, plus one line: "To get a PDF,
-  open it and choose File > Download > PDF." Don't repeat document titles at the user.
+  open it and choose File > Download > PDF." Then: "For an ATS score and a second pass, open Grammarly's
+  **Resume Builder** agent in Go and give it the resume link." (Agents can't call it for you.) Don't repeat
+  document titles at the user.
 When asked for help with an application form, draft answers from the master resume to paste in, and mark
 anything you wrote rather than copied, so the user can check it.
 ${RULES}
