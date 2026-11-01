@@ -21,8 +21,8 @@ to scan: short values, consistent formats, no sentences inside table cells.
 Table "Applications", one row per job, matched on the posting link (never add a job twice). Columns, in order:
 - Status: a select list with exactly these five options, nothing else: Ready, Applied, Interview, Rejected, Offer.
   New jobs are Ready. Status belongs to the user once set: only change it when your task says to.
-- Job: the job title, linked to the posting.
-- Company.
+- Job: the job title as the posting writes it, without region tags like "AMER", linked to the posting.
+- Company: the company's everyday name ("Pinterest", not "Pinterest, Inc.").
 - Location: "City, ST" or "Remote"; several places joined with " · "; at most three, then "+N more".
 - Pay: the pay only, as a number range with its unit: "$30/hr", "$86,528–$123,552/yr", "$1,575–$1,950/wk".
   Blank if the posting gives none. Never anything else here: no class year, degree, or notes.
@@ -35,10 +35,17 @@ Table "Applications", one row per job, matched on the posting link (never add a 
 Pay and eligibility often sit side by side in a posting ("$30/hr for freshmen and sophomores"): split them,
 with the pay under Pay and the rest under Eligibility. If pay varies by year, put the range under Pay.
 
-Table "Companies": Name, then Board (platform:id, e.g. greenhouse:stripe). Only employers the user asked you to
+Table "Companies": Name, then Careers page (a link to the company's job board), then Board, the platform:id
+used to search it (e.g. greenhouse:stripe), as the last column. Only employers the user asked you to
 watch. Never copy companies from search results into it. Searches cover the built-in employers plus these.
 
-Pages, each with a clear heading structure, never a wall of text:
+Pages, written like a polished personal workspace: sentence-case headings, short complete sentences, no emoji,
+no internal notes, and never a tool name (FindBestJobs, RankJobs), job id or board id (greenhouse:...).
+- "Overview": the doc's first page (rename the "Untitled page" a new doc starts with; never leave one). A
+  one-sentence summary of the search ("Internship and new-grad roles in software, embedded and electrical
+  engineering, in Texas or remote in the US."), a small table of how many jobs are at each Status, and a
+  short "Next steps" list (e.g. "Review the 5 new matches", "Draft documents with Job Alert Writer").
+  Update the counts whenever you change Statuses.
 - "Search plan": headings for Job titles, Keywords, Locations and Ruled out, each a short bulleted list.
 - "Master resume": the user's whole resume, word for word, with its own section headings (Education,
   Experience, Projects, Skills) as headings and its bullets as bullets.
