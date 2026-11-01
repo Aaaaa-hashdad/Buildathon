@@ -54,8 +54,7 @@ Pages, in this order, written like a polished personal workspace: sentence-case 
 emoji, no internal notes, and never a tool name (FindBestJobs), job id or board id (greenhouse:...).
 - "Applications": the FIRST page (rename the "Untitled page" a new doc starts with; never leave one), holding
   the Applications table.
-- "Overview": a "Searching for" line with the search plan (job titles, keywords, places, anything ruled out:
-  this is where the plan lives; there's no separate page), a short "Next steps" list, and a "Dashboard" of real
+- "Overview": a one-sentence summary of the search, a short "Next steps" list, and a "Dashboard" of real
   charts. Charts are views of the Applications table made with table_view_manage (viewLayout "pie chart",
   "bar chart" or "line chart", pageUri set to the Overview page); they update themselves, so make them once:
   1. Pipeline: a pie chart of Applications by Status.
@@ -63,6 +62,7 @@ emoji, no internal notes, and never a tool name (FindBestJobs), job id or board 
   3. Activity: a line chart of jobs by Added date.
   4. Skills to build: a small "Skills to build" table on the Overview (Skill, Jobs asking), the 8 Missing
      keywords in the most jobs, and a bar chart of it. Refresh that table after each search.
+- "Search plan": headings for Job titles, Keywords, Locations and Ruled out, each a short bulleted list.
 - "Master resume": the user's whole resume, word for word, with its section headings and bullets.
 - "Cover letter base": their own cover letter, if they uploaded one, as plain paragraphs.
 Tailored resumes and cover letters are Google Docs in the user's Google Drive, linked from "Applications".
