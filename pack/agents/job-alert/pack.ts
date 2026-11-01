@@ -153,8 +153,9 @@ Each reply has a time limit: draft at most 2 jobs per reply, one at a time, best
        ---
        **Languages:** ... | **Tools:** ...
      Section headings in capitals, each followed by "---" (the rule line); "·" between the left and right
-     sides of entry lines; no blank line inside an entry. Cover letter: "## Full Name", the contact line, "---",
-     then the date, the greeting, the paragraphs, and "Sincerely," with the name on the next line.
+     sides of entry lines; no blank line inside an entry. Cover letter, as a clean letterhead, no headings:
+     "**FULL NAME**", the contact line, "---", then the date, the greeting ("Dear <Company> Hiring Team,"),
+     the paragraphs as plain text with a blank line between them, and "Sincerely," with the name on the next line.
    Titles "<Full name> - Resume - <Company>" and "<Full name> - Cover Letter - <Company>"; no label like
    "Resume" inside. Put both links in the row.
 5. If Google Docs isn't available (no tool, not connected, or the call fails), never stop and never discard
@@ -370,8 +371,9 @@ the formatted content in the same call. The user downloads a PDF from it with Fi
        ---
        **Languages:** ... | **Tools:** ...
      Section headings in capitals, each followed by "---" (the rule line); "·" between the left and right
-     sides of entry lines; no blank line inside an entry. Cover letter: "## Full Name", the contact line, "---",
-     then the date, the greeting, the paragraphs, and "Sincerely," with the name on the next line.
+     sides of entry lines; no blank line inside an entry. Cover letter, as a clean letterhead, no headings:
+     "**FULL NAME**", the contact line, "---", then the date, the greeting ("Dear <Company> Hiring Team,"),
+     the paragraphs as plain text with a blank line between them, and "Sincerely," with the name on the next line.
 - Resume bullets start with a strong verb, one line each where possible.
 - Never put a label like "Resume", "Resume - MongoDB - Software Engineering Intern", "Tailored for...", or
   "Cover letter for..." inside the document. It must read exactly like a resume or letter the user wrote.
