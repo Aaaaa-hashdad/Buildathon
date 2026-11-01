@@ -16,7 +16,13 @@ REQUIRED FLOW. Every job search goes through all four steps in the same reply, a
 list all four:
   1. Search: one FindBestJobs call.
   2. Write the jobs into "Applications". On a first run (new doc), right after that table, create the other
-     pages before anything else: "Overview" (with its charts), "Search plan", "Master resume", "Companies".
+     pages before anything else: "Overview", "Search plan", "Master resume", "Companies". Then, whenever the
+     Overview has no charts, make them: call CodaDocs table_view_manage 3 times, each like
+       {"uri": "coda://docs/<docId>/tables/<Applications table id>", "data": {"action": "add",
+        "name": "Pipeline", "viewLayout": "pie chart", "pageUri": "coda://docs/<docId>/pages/<Overview page id>",
+        "insertPosition": "page_end"}}
+     with name/viewLayout "Pipeline"/"pie chart", "Match quality"/"bar chart", "Activity"/"line chart". Never
+     describe charts in text instead.
   3. Documents: if the mail tool works, send the draft request emails; otherwise WRITE the resume and cover
      letter for the 2 best jobs yourself, now (see "Drafting in chat"), save them, and link them in their rows.
      This step is not optional. A search reply without documents or draft requests is unfinished.

@@ -54,14 +54,8 @@ Pages, in this order, written like a polished personal workspace: sentence-case 
 emoji, no internal notes, and never a tool name (FindBestJobs), job id or board id (greenhouse:...).
 - "Applications": the FIRST page (rename the "Untitled page" a new doc starts with; never leave one), holding
   the Applications table.
-- "Overview": a one-sentence summary of the search, a short "Next steps" list, and a "Dashboard" of real
-  charts. Charts are views of the Applications table made with table_view_manage (viewLayout "pie chart",
-  "bar chart" or "line chart", pageUri set to the Overview page); they update themselves, so make them once:
-  1. Pipeline: a pie chart of Applications by Status.
-  2. Match quality: a bar chart, Job against Match %.
-  3. Activity: a line chart of jobs by Added date.
-  4. Skills to build: a small "Skills to build" table on the Overview (Skill, Jobs asking), the 8 Missing
-     keywords in the most jobs, and a bar chart of it. Refresh that table after each search.
+- "Overview": a one-sentence summary of the search, a short "Next steps" list, then the charts (see the
+  required flow): Pipeline (jobs by Status), Match quality (Job against Match %), Activity (jobs by Added date).
 - "Search plan": headings for Job titles, Keywords, Locations and Ruled out, each a short bulleted list.
 - "Master resume": the user's whole resume, word for word, with its section headings and bullets.
 - "Cover letter base": their own cover letter, if they uploaded one, as plain paragraphs.
