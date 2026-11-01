@@ -367,6 +367,17 @@ export async function searchBoard(context: sdk.ExecutionContext, board: Board, q
     .slice(0, limit);
 }
 
+/** Every open job at one company, without descriptions where the platform allows it. Matching is up to the caller. */
+export async function listBoard(context: sdk.ExecutionContext, board: Board, queries: string[]): Promise<Job[]> {
+  requireEnabled(board.platform);
+  if (board.platform === "smartrecruiters") {
+    // Its list has no titles worth matching locally, so it's searched once per query.
+    const found = await Promise.all(queries.map(q => searchSmartRecruiters(context, board, q, "", 50)));
+    return found.flat();
+  }
+  return FETCHERS[board.platform](context, board, false);
+}
+
 /** One job by the id searchBoard gave it ("greenhouse:stripe:12345"). */
 export async function getJob(context: sdk.ExecutionContext, id: string): Promise<Job> {
   const [platform, slug, ...rest] = id.split(":");

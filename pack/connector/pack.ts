@@ -4,6 +4,7 @@
 import * as sdk from "@superhuman/plugins-sdk";
 import { DEFAULT_COMPANIES, DOMAINS, ENABLED, findCompany, getJob, Job, requireBoard, searchBoard } from "./boards";
 import { readDocument } from "./documents";
+import { findBestJobs } from "./best";
 import { keywordMatch } from "./keywords";
 import { markdownToPdf } from "./pdf";
 
@@ -188,6 +189,73 @@ pack.addFormula({
   }),
   execute: async function ([file], context) {
     return readDocument(context, file);
+  },
+});
+
+pack.addFormula({
+  name: "FindBestJobs",
+  description: "The whole search in one call: every title against every employer, read in full, scored against the " +
+    "resume by keywords, with pay and eligibility pulled out. Returns the best matches first.",
+  parameters: [
+    sdk.makeParameter({
+      type: sdk.ParameterType.StringArray,
+      name: "titles",
+      description: "Short title searches, one to three words each: 'software engineer', 'software intern', 'data'.",
+    }),
+    sdk.makeParameter({
+      type: sdk.ParameterType.String,
+      name: "resume",
+      description: "The resume's full text, to score each job against.",
+    }),
+    locationParam,
+    sdk.makeParameter({
+      type: sdk.ParameterType.StringArray,
+      name: "exclude",
+      description: "Title words to leave out, e.g. senior, staff, principal, manager, director for a student.",
+      optional: true,
+    }),
+    sdk.makeParameter({
+      type: sdk.ParameterType.Number,
+      name: "count",
+      description: "How many to return, 20 by default.",
+      optional: true,
+    }),
+    sdk.makeParameter({
+      type: sdk.ParameterType.StringArray,
+      name: "companies",
+      description: "Extra company boards to search besides the built-in employers.",
+      optional: true,
+    }),
+    sdk.makeParameter({
+      type: sdk.ParameterType.String,
+      name: "country",
+      description: "'US' keeps only US places and remote jobs that don't name another country. Blank = anywhere.",
+      optional: true,
+    }),
+  ],
+  resultType: sdk.ValueType.Array,
+  items: sdk.makeObjectSchema({
+    properties: {
+      id: { type: sdk.ValueType.String },
+      title: { type: sdk.ValueType.String },
+      company: { type: sdk.ValueType.String },
+      location: { type: sdk.ValueType.String },
+      posted: { type: sdk.ValueType.String },
+      jobUrl: { type: sdk.ValueType.String, codaType: sdk.ValueHintType.Url },
+      matchPercent: { type: sdk.ValueType.Number },
+      matched: { type: sdk.ValueType.Array, items: { type: sdk.ValueType.String } },
+      missing: { type: sdk.ValueType.Array, items: { type: sdk.ValueType.String } },
+      pay: { type: sdk.ValueType.String, description: "The pay the posting states, or blank." },
+      eligibility: { type: sdk.ValueType.String, description: "The posting's sentence on degree, year or authorization." },
+    },
+    displayProperty: "title",
+  }),
+  execute: async function ([titles, resume, location = "", exclude = [], count = 20, companies = [], country = ""],
+    context) {
+    return findBestJobs(context, {
+      titles, resume, location, exclude, count, country,
+      companies: [...new Set([...companies, ...DEFAULT_COMPANIES])],
+    });
   },
 });
 
