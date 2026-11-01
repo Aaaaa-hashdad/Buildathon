@@ -32,7 +32,8 @@ to scan: short values, consistent formats, no sentences inside table cells.
 Table "Applications", one row per job, matched on the posting link (never add a job twice). Columns, in order:
 - Status: a select list with exactly these six options, nothing else: Ready, Applied, Interview, Offer,
   Accepted, Rejected. New jobs are Ready; Accepted is an offer the user took. Status belongs to the user once set: only change it when your task says to.
-- Job: the job title as the posting writes it, without region tags like "AMER", linked to the posting.
+- Job: plain text (not a link), "<job title> · <company>", the title as the posting writes it without region
+  tags like "AMER". Charts label jobs with this column, so never put a URL in it.
 - Company: the company's everyday name ("Pinterest", not "Pinterest, Inc.").
 - Location: "City, ST" or "Remote"; several places joined with " · "; at most three, then "+N more".
 - Pay: the pay only, as a number range with its unit: "$30/hr", "$86,528–$123,552/yr", "$1,575–$1,950/wk".
@@ -41,6 +42,7 @@ Table "Applications", one row per job, matched on the posting link (never add a 
   "Grad 2027–2028", "US work authorization". Blank if the posting says nothing.
 - Match %: a number from FindBestJobs.
 - Matched keywords and Missing keywords: from FindBestJobs, comma-separated, most important first, up to 10 each.
+- Posting: the link to the job posting, labeled "View posting".
 - Resume and Cover letter: links to the Google Docs, labeled "Resume" and "Cover letter".
 - Posted and Added: dates as "Oct 31, 2026".
 Pay and eligibility often sit side by side in a posting ("$30/hr for freshmen and sophomores"): split them,
