@@ -72,9 +72,36 @@ const NOT_US = new RegExp("\\b(" + [
   "seoul", "sydney", "melbourne", "sao paulo", "emea", "apac", "latam",
 ].join("|") + ")\\b", "i");
 
-/** For country "US": keep US places and remote jobs that don't name another country. */
+const US_STATES: Record<string, string> = {
+  AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California", CO: "Colorado",
+  CT: "Connecticut", DE: "Delaware", DC: "District of Columbia", FL: "Florida", GA: "Georgia", HI: "Hawaii",
+  ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa", KS: "Kansas", KY: "Kentucky", LA: "Louisiana",
+  ME: "Maine", MD: "Maryland", MA: "Massachusetts", MI: "Michigan", MN: "Minnesota", MS: "Mississippi",
+  MO: "Missouri", MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire", NJ: "New Jersey",
+  NM: "New Mexico", NY: "New York", NC: "North Carolina", ND: "North Dakota", OH: "Ohio", OK: "Oklahoma",
+  OR: "Oregon", PA: "Pennsylvania", RI: "Rhode Island", SC: "South Carolina", SD: "South Dakota",
+  TN: "Tennessee", TX: "Texas", UT: "Utah", VT: "Vermont", VA: "Virginia", WA: "Washington",
+  WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming",
+};
+
+/** "Houston, TX, College Station" -> ["TX", "Texas"]: each state named or abbreviated, both ways. */
+function statesIn(location: string): string[] {
+  const out = new Set<string>();
+  for (const [code, name] of Object.entries(US_STATES)) {
+    if (new RegExp(`\\b${code}\\b`).test(location) || new RegExp(`\\b${name}\\b`, "i").test(location)) {
+      out.add(code);
+      out.add(name);
+    }
+  }
+  return [...out];
+}
+
+/**
+ * Keep jobs in the country: for "US" (the default), US places and remote jobs that don't name another
+ * country. "any" turns the filter off.
+ */
 function inCountry(location: string, country: string): boolean {
-  if (!country || country.toLowerCase() !== "us") {
+  if ((country || "US").toLowerCase() !== "us") {
     return true;
   }
   return !NOT_US.test(location) || /\b(us|usa|united states)\b/i.test(location);
@@ -105,7 +132,7 @@ export async function findBestJobs(context: sdk.ExecutionContext, opts: {
   count?: number;
   country?: string;
   degree?: string;
-  widened?: "places" | "titles";
+  widened?: "state" | "country" | "titles";
 }): Promise<BestJob[]> {
   const queries = opts.titles.map(t => t.trim()).filter(Boolean);
   if (!queries.length) {
@@ -171,12 +198,17 @@ export async function findBestJobs(context: sdk.ExecutionContext, opts: {
   if (kept.length >= count || opts.widened === "titles") {
     return kept.slice(0, count);
   }
-  // Too few: widen and top up, never returning fewer than we could have found. First drop the places (the
-  // country filter still applies), then broaden each title to its last word ("software engineer intern" -> "intern").
-  const wider = opts.location
-    ? { ...opts, location: "", widened: "places" as const }
-    : { ...opts, titles: [...new Set(queries.map(q => q.split(/\s+/).pop() || q))], widened: "titles" as const };
-  const more = await findBestJobs(context, { ...wider, count: count - kept.length + kept.length });
+  // Too few: widen one step and top up. The country filter always stays.
+  //   1. the places given -> their states, plus remote ("Houston, TX" -> "TX, Texas, Remote")
+  //   2. -> anywhere in the country
+  //   3. -> each title broadened to its last word ("software engineer intern" -> "intern")
+  const states = statesIn(opts.location || "");
+  const wider = opts.location && !opts.widened && states.length
+    ? { ...opts, location: [...states, "Remote"].join(", "), widened: "state" as const }
+    : opts.location
+      ? { ...opts, location: "", widened: "country" as const }
+      : { ...opts, titles: [...new Set(queries.map(q => q.split(/\s+/).pop() || q))], widened: "titles" as const };
+  const more = await findBestJobs(context, wider);
   const ids = new Set(kept.map(j => j.id));
   return [...kept, ...more.filter(j => !ids.has(j.id))].slice(0, count);
 }

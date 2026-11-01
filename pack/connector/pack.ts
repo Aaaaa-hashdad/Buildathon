@@ -229,7 +229,7 @@ pack.addFormula({
     sdk.makeParameter({
       type: sdk.ParameterType.String,
       name: "country",
-      description: "'US' keeps only US places and remote jobs that don't name another country. Blank = anywhere.",
+      description: "'US' (the default) keeps US places and remote jobs that don't name another country. 'any' = anywhere.",
       optional: true,
     }),
     sdk.makeParameter({

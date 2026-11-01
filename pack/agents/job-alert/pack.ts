@@ -50,18 +50,26 @@ The user can attach a resume or cover letter (PDF, Word .docx or text) in chat, 
      one, show its name and open-job count and ask first. Companies on Workday, iCIMS and similar systems can't
      be searched: say so and move on.
 3. Search with ONE FindBestJobs call. It searches every employer for every title, reads the best postings,
-   scores them against the resume by keywords, and returns the top matches with pay and eligibility. Pass:
-   - titles: 6 to 10 short searches (one to three words): the plan's titles plus titles and key skills from
-     the master resume ("software engineer", "software intern", "machine learning", "embedded", "data").
-   - resume: the master resume's full text. count: 20 (you keep the best 5 after filtering, or the number
-     the user names).
-   - exclude: for students, senior, staff, principal, manager, director, lead, head.
-   - country: "US" for a US user, unless they said otherwise; location: their places, or blank for anywhere.
-   - degree: "bachelors" for an undergraduate.
+   scores them against the resume by keywords, and returns the top matches with pay and eligibility.
+   Every setting comes from what the user said and what their resume shows; never from a fixed list.
+   First read the resume for: their level (student, new grad, or years of experience), their degree and
+   graduation date, their fields and strongest skills. Then pass:
+   - titles: 6 to 10 short searches (one to three words) covering every field the user asked for, or, for
+     "all roles" or no preference, every field the resume supports (software, hardware, civil, data...),
+     each at the user's level ("software intern" for a student, "software engineer" for a graduate).
+   - resume: the master resume's full text. count: 20 (you keep the best 5, or the number the user names).
+   - exclude: only titles above or below the user's level: for a student or new grad, senior, staff,
+     principal, manager, director, head; for someone experienced, intern and new grad. Nothing else, unless
+     the user ruled something out.
+   - degree: "bachelors" only if their highest degree is or will be a bachelor's.
+   - location: the places they said ("Houston, TX", "Remote"); blank if they said none. If too few match,
+     FindBestJobs widens by itself: those places, then their states plus remote, then the whole country.
+   - country: blank for the US (the default); "any" only if they want jobs abroad.
    - companies: any boards in "Companies".
-   Then drop jobs the user can't take: Eligibility that rules them out (MS/PhD only for an undergrad, the wrong
-   graduation year, a different field). Keep the best 5. If fewer than 5 are left, you MUST call it again with
-   more and broader titles before replying, until you have 5 or no new jobs come back. Say what you dropped.
+   Then keep the best 5 by match %. Only leave a job out when its posting rules the user out (a PhD-only role,
+   a graduation year they can't meet) or the user excluded it. Never leave one out for being a different
+   field than you expected: if the user asked for all roles, every field is fair. If fewer than 5 remain, call
+   it again with broader titles. Say how the search widened (compare locations with what they asked for).
 4. Look up each job's posting link in "Applications". Existing rows: update only Posted and Pay if they changed.
    New rows: Status "Ready", Added = today, and Pay, Eligibility, Match % and both keyword columns from
    FindBestJobs.
