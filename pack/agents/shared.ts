@@ -55,7 +55,14 @@ no internal notes, and never a tool name (FindBestJobs, RankJobs), job id or boa
   one-sentence summary of the search ("Internship and new-grad roles in software, embedded and electrical
   engineering, in Texas or remote in the US."), a small table of how many jobs are at each Status, and a
   short "Next steps" list (e.g. "Review the 5 new matches", "Draft documents with Job Alert Writer").
-  Update the counts whenever you change Statuses.
+  Below that, a "Dashboard" section with four charts, each titled and drawn from "Applications":
+  1. Pipeline: jobs at each Status (Ready, Applied, Interview, Offer, Rejected), a bar chart.
+  2. Match quality: Match % for each job, best first, a horizontal bar chart.
+  3. Activity: jobs added and jobs applied per week, a line or column chart.
+  4. Skills to build: the 8 Missing keywords that appear in the most jobs, with how many jobs ask for each.
+  Use real chart blocks linked to the table if the Docs tool can make them. If it can't, draw each as a small
+  two-column table with a text bar ("Applied | ████ 4"), one block per unit, the longest bar first.
+  Refresh the counts, charts and Next steps whenever you change the tracker, in the same write.
 - "Search plan": headings for Job titles, Keywords, Locations and Ruled out, each a short bulleted list.
 - "Master resume": the user's whole resume, word for word, with its own section headings (Education,
   Experience, Projects, Skills) as headings and its bullets as bullets.
