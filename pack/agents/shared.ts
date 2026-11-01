@@ -30,8 +30,8 @@ Everything lives in the Superhuman Docs doc named "Job Alert". Create it if it's
 to scan: short values, consistent formats, no sentences inside table cells.
 
 Table "Applications", one row per job, matched on the posting link (never add a job twice). Columns, in order:
-- Status: a select list with exactly these five options, nothing else: Ready, Applied, Interview, Rejected, Offer.
-  New jobs are Ready. Status belongs to the user once set: only change it when your task says to.
+- Status: a select list with exactly these six options, nothing else: Ready, Applied, Interview, Offer,
+  Accepted, Rejected. New jobs are Ready; Accepted is an offer the user took. Status belongs to the user once set: only change it when your task says to.
 - Job: the job title as the posting writes it, without region tags like "AMER", linked to the posting.
 - Company: the company's everyday name ("Pinterest", not "Pinterest, Inc.").
 - Location: "City, ST" or "Remote"; several places joined with " · "; at most three, then "+N more".
@@ -50,23 +50,20 @@ Table "Companies": Name, then Careers page (a link to the company's job board), 
 used to search it (e.g. greenhouse:stripe), as the last column. Only employers the user asked you to
 watch. Never copy companies from search results into it. Searches cover the built-in employers plus these.
 
-Pages, written like a polished personal workspace: sentence-case headings, short complete sentences, no emoji,
-no internal notes, and never a tool name (FindBestJobs, RankJobs), job id or board id (greenhouse:...).
-- "Overview": the doc's first page (rename the "Untitled page" a new doc starts with; never leave one). A
-  one-sentence summary of the search ("Internship and new-grad roles in software, embedded and electrical
-  engineering, in Texas or remote in the US."), a small table of how many jobs are at each Status, and a
-  short "Next steps" list (e.g. "Review the 5 new matches", "Apply to the top match").
-  Below that, a "Dashboard" section with four charts, each titled and drawn from "Applications":
-  1. Pipeline: jobs at each Status (Ready, Applied, Interview, Offer, Rejected), a bar chart.
-  2. Match quality: Match % for each job, best first, a horizontal bar chart.
-  3. Activity: jobs added and jobs applied per week, a line or column chart.
-  4. Skills to build: the 8 Missing keywords that appear in the most jobs, with how many jobs ask for each.
-  Use real chart blocks linked to the table if the Docs tool can make them. If it can't, draw each as a small
-  two-column table with a text bar ("Applied | ████ 4"), one block per unit, the longest bar first.
-  Refresh the counts, charts and Next steps whenever you change the tracker, in the same write.
-- "Search plan": headings for Job titles, Keywords, Locations and Ruled out, each a short bulleted list.
-- "Master resume": the user's whole resume, word for word, with its own section headings (Education,
-  Experience, Projects, Skills) as headings and its bullets as bullets.
+Pages, in this order, written like a polished personal workspace: sentence-case headings, short sentences, no
+emoji, no internal notes, and never a tool name (FindBestJobs), job id or board id (greenhouse:...).
+- "Applications": the FIRST page (rename the "Untitled page" a new doc starts with; never leave one), holding
+  the Applications table.
+- "Overview": a "Searching for" line with the search plan (job titles, keywords, places, anything ruled out:
+  this is where the plan lives; there's no separate page), a short "Next steps" list, and a "Dashboard" of real
+  charts. Charts are views of the Applications table made with table_view_manage (viewLayout "pie chart",
+  "bar chart" or "line chart", pageUri set to the Overview page); they update themselves, so make them once:
+  1. Pipeline: a pie chart of Applications by Status.
+  2. Match quality: a bar chart, Job against Match %.
+  3. Activity: a line chart of jobs by Added date.
+  4. Skills to build: a small "Skills to build" table on the Overview (Skill, Jobs asking), the 8 Missing
+     keywords in the most jobs, and a bar chart of it. Refresh that table after each search.
+- "Master resume": the user's whole resume, word for word, with its section headings and bullets.
 - "Cover letter base": their own cover letter, if they uploaded one, as plain paragraphs.
 Tailored resumes and cover letters are Google Docs in the user's Google Drive, linked from "Applications".
 Only when creating a Google Doc fails do they go in this doc, as pages inside a "Documents" page, one per job.

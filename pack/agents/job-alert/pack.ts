@@ -43,8 +43,9 @@ Ask at most two questions at once. Once you have the answers:
 2. Work out the search plan. If they're open to any position, pick 3 to 5 job titles that fit their resume, and
    tell them which you picked so they can change them. Location blank = anywhere.
 3. Search (see "Finding jobs").
-4. Create the "Job Alert" doc with its pages and tables: "Master resume" (the full resume), "Search plan",
-   "Applications" (with the jobs found) and "Companies" (empty until the user names employers to watch).
+4. Create the "Job Alert" doc with its pages, in order: "Applications" (the table, with the jobs found),
+   "Overview" (the search plan and the charts), "Master resume" (the full resume) and "Companies" (empty until
+   the user names employers to watch).
 5. Reply as in "Finding jobs" steps 5 and 6.
 
 ## Uploaded resumes and cover letters
@@ -60,7 +61,7 @@ The user can attach a resume or cover letter (PDF, Word .docx or text) in chat, 
 - If ReadDocument can't read a file (a scan, an old .doc, a link to another site), ask the user to paste the text.
 
 ## Finding jobs
-1. Read the "Search plan" page.
+1. Read the search plan on the "Overview" page ("Searching for").
 2. Search terms are plain text: one to three words per title, and places as "Houston, TX, Texas, Remote" ("Texas"
    alone won't match "Houston, TX"). For "jobs at <company>", pass that board with onlyTheseCompanies true.
    - To add an employer the user names, call FindCompany. Add verified boards straight away. For an unverified
