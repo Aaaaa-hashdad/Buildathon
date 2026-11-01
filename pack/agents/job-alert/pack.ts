@@ -2,7 +2,7 @@
 // Job Alert Writer agent (agents/job-alert-writer), which has the room for detailed writing guidance.
 
 import * as sdk from "@superhuman/plugins-sdk";
-import { JOB_ALERT_CONNECTOR_ID, jobAlertConnector, RULES, TRACKER } from "../shared";
+import { DRAFT_REQUEST_FORMAT, JOB_ALERT_CONNECTOR_ID, jobAlertConnector, RULES, TRACKER } from "../shared";
 
 export const pack = sdk.newAgent();
 
@@ -73,14 +73,15 @@ The user can attach a resume or cover letter (PDF, Word .docx or text) in chat, 
 4. Look up each job's posting link in "Applications". Existing rows: update only Posted and Pay if they changed.
    New rows: Status "Ready", Added = today, and Pay, Eligibility, Match % and both keyword columns from
    FindBestJobs.
-5. Resumes and cover letters are written by the Job Alert Writer agent, not you. End every search reply with:
-   "Job Alert Writer drafts tailored resumes and cover letters for new jobs within the hour (once its 'Draft
-   documents for new jobs' routine is on), or right away if you open **Job Alert Writer** and say *draft my
-   Ready jobs*."
-   If the user asks you for a resume or cover letter, add the job to "Applications" if needed and give them
-   that same line.
+5. Start the drafting: resumes and cover letters are written by the Job Alert Writer agent, not you. Right after
+   the rows are written, send draft request emails for every new job, two jobs per email (5 jobs = 3 emails),
+   exactly in this format; each one starts the Writer, which puts Google Doc links in the rows within minutes.
+${DRAFT_REQUEST_FORMAT}
+   For a job the user asks about later ("write a cover letter for the Pinterest job"), add it to "Applications"
+   if needed and send a draft request for just that job.
 6. Report the jobs as a numbered list, best match first: title, company, location, pay, match %, and the
-   posting link. Then how many were already tracked, what you dropped, and the Job Alert Writer line.
+   posting link. Then how many were already tracked, and: "Job Alert Writer is drafting a tailored resume and
+   cover letter for each; the Google Doc links will appear in your tracker in a few minutes."
 
 ## Tracking applications
 Match an email to an "Applications" row on the company and job title.
@@ -126,8 +127,8 @@ pack.addDefaultRoutine({
   name: "Morning job sweep and Monday follow-ups",
   instructions: `
 Run the whole job search from the search plan without asking questions. If the plan is missing, stop and email
-the user one line asking them to set it up in chat. Otherwise add the new jobs to the tracker, then email the
-user a digest: the subject "Job Alert: N new jobs", the new jobs grouped by company with title, location,
+the user one line asking them to set it up in chat. Otherwise add the new jobs to the tracker, send the draft
+request emails for them (Finding jobs, step 5), then email the user a digest: the subject "Job Alert: N new jobs", the new jobs grouped by company with title, location,
 posted date and link, and one line on what was skipped. If nothing is new, send nothing.
 
 On Mondays, also check for follow-ups: rows with Status "Applied" and no reply for 10 or more days, and rows
@@ -147,6 +148,28 @@ const ATS_SENDERS = ["greenhouse.io", "lever.co", "ashbyhq.com", "workable.com",
   "myworkday.com", "icims.com", "jobvite.com", "taleo.net", "successfactors", "bamboohr.com", "paylocity.com"];
 const SUBJECTS = ["application", "applying", "candidacy", "interview", "offer", "next steps",
   "thank you for your interest", "thanks for your interest"];
+
+pack.addDefaultRoutine({
+  name: "Mark jobs Applied from emails I send",
+  instructions: `
+The user just sent this email. If it applies for a job (to a recruiter, a hiring manager or a careers address,
+usually with a resume attached or mentioned), set that job's Status to Applied, adding the row if it's missing,
+without asking. Otherwise do nothing. Never reply or send anything.
+`,
+  trigger: {
+    kind: sdk.DefaultTriggerKind.Event,
+    type: sdk.EventTriggerType.Mail,
+    mailEventType: sdk.MailEventType.MessageSent,
+    filters: {
+      combinator: sdk.FilterCombinator.Or,
+      conditions: ["application", "applying", "resume", "cover letter", "position", "role", "internship"].map(value => ({
+        field: sdk.MailFilterField.Subject as const,
+        operator: sdk.FilterOperator.TextContains as const,
+        value,
+      })),
+    },
+  },
+});
 
 pack.addDefaultRoutine({
   name: "Update from application emails",

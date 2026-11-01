@@ -2,14 +2,17 @@
 // so its instructions have room for detailed writing guidance and examples; Job Alert finds the jobs.
 
 import * as sdk from "@superhuman/plugins-sdk";
-import { GOOGLE_DOCS_PACK_ID, GRAMMARLY_PACK_ID, JOB_ALERT_CONNECTOR_ID, jobAlertConnector, RULES, TRACKER } from "../shared";
+import {
+  DRAFT_REQUEST_FORMAT, DRAFT_REQUEST_SUBJECT, GOOGLE_DOCS_PACK_ID, GRAMMARLY_PACK_ID, JOB_ALERT_CONNECTOR_ID,
+  jobAlertConnector, RULES, TRACKER,
+} from "../shared";
 
 export const pack = sdk.newAgent();
 
 pack.setInstructions(`
 You are Job Alert Writer. You write tailored resumes and cover letters for one person's job applications, as
-Google Docs, from their master resume and each job's posting. Job Alert, a separate agent, finds the jobs and
-adds them to the tracker. Never put citation tags, ids or brackets
+Google Docs, from their master resume and each job's posting. Job Alert, a separate agent, finds the jobs, adds
+them to the tracker, and emails you draft requests for them. Never put citation tags, ids or brackets
 like <brain-...> in replies or documents.
 
 At the start of every task, call get_pack_tools for pack ${JOB_ALERT_CONNECTOR_ID} (GetJob, RankJobs, ReadDocument),
@@ -17,6 +20,8 @@ for pack ${GOOGLE_DOCS_PACK_ID} (Google Docs) and for pack ${GRAMMARLY_PACK_ID} 
 get_pack_mcp_tools for it), then call them.
 ${TRACKER}
 ## What to draft
+- A draft request email from Job Alert: the jobs listed in it.
+${DRAFT_REQUEST_FORMAT}
 - "Draft my Ready jobs" (or "continue"): the 2 best-matching "Applications" rows with Status Ready and no
   documents yet. A specific job: a row, a link, or a pasted or uploaded description (ReadDocument).
 - Each reply has a time limit, so draft at most 2 jobs per reply, one at a time, saving each before the next.
@@ -177,19 +182,26 @@ pack.setDefaultWhileWritingTrigger({
   assistMode: sdk.ContextualTriggerAssistMode.Balanced,
 });
 
-// Drafting runs on its own, so documents appear without anyone asking: every hour (the most often a schedule may
-// fire) it drafts the next two Ready jobs, so new jobs get documents within the hour. Go has no trigger for new
-// rows in a doc. Runs with nothing to draft stop straight away.
-// Installs paused, like every routine: the user turns it on once.
+// Job Alert emails a draft request (two jobs) after each search; each one starts a run of this routine, so all
+// the new jobs are drafted in parallel within minutes. Installs paused, like every routine: turn it on once.
 pack.addDefaultRoutine({
-  name: "Draft documents for new jobs",
+  name: "Draft documents when Job Alert finds jobs",
   instructions: `
-Find the 2 best-matching "Applications" rows with Status Ready and no documents yet. If there are none, stop
-and do nothing. Otherwise draft both, as your instructions say, without asking: the user isn't watching.
-Don't send any email.
+If this email's subject starts with "${DRAFT_REQUEST_SUBJECT}", it's a draft request from Job Alert: draft a
+resume and cover letter for each job listed in it, as your instructions say, without asking (the user isn't
+watching). Skip any job that already has both documents. Don't reply and don't send any email. If the subject
+doesn't match, do nothing.
 `,
   trigger: {
-    kind: sdk.DefaultTriggerKind.Schedule,
-    rruleString: "DTSTART:20261101T000000\nRRULE:FREQ=HOURLY",
+    kind: sdk.DefaultTriggerKind.Event,
+    type: sdk.EventTriggerType.Mail,
+    mailEventType: sdk.MailEventType.MessageReceived,
+    filters: {
+      conditions: [{
+        field: sdk.MailFilterField.Subject,
+        operator: sdk.FilterOperator.TextContains,
+        value: DRAFT_REQUEST_SUBJECT,
+      }],
+    },
   },
 });

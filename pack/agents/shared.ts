@@ -11,6 +11,16 @@ export const GOOGLE_DOCS_PACK_ID = 68620;
 // Grammarly, published by Grammarly as a Go agent. Every resume and cover letter goes through it.
 export const GRAMMARLY_PACK_ID = 43834;
 
+// Job Alert starts the Writer with an email to the user's own inbox: Go has no other way for one agent to start
+// another. One email per two jobs, so each pair is drafted in its own run, inside the per-run time limit. The
+// subject avoids "application", "interview" and "offer", so Job Alert's own email routine ignores it.
+export const DRAFT_REQUEST_SUBJECT = "[Job Alert] New jobs to draft";
+
+export const DRAFT_REQUEST_FORMAT = `
+Draft request emails go to the user's own address. Subject: "${DRAFT_REQUEST_SUBJECT} (<n> of <total>)". Body:
+one line per job, at most two jobs: "<job title> | <company> | <posting link> | <job id, e.g. greenhouse:stripe:123>".
+`;
+
 // The tracker every agent reads and writes. superhuman_docs.py (the desktop app's "Send to Superhuman
 // Docs" button) makes the same doc and table, so jobs from either side land in one place.
 export const TRACKER = `
