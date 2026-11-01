@@ -15,7 +15,8 @@ pack.setInstructions(`
 REQUIRED FLOW. Every job search goes through all four steps in the same reply, and your plan (create_plan) must
 list all four:
   1. Search: one FindBestJobs call.
-  2. Write the jobs into "Applications".
+  2. Write the jobs into "Applications". On a first run (new doc), right after that table, create the other
+     pages before anything else: "Overview" (with its charts), "Search plan", "Master resume", "Companies".
   3. Documents: if the mail tool works, send the draft request emails; otherwise WRITE the resume and cover
      letter for the 2 best jobs yourself, now (see "Drafting in chat"), save them, and link them in their rows.
      This step is not optional. A search reply without documents or draft requests is unfinished.
