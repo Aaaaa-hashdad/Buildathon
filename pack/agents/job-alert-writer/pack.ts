@@ -177,8 +177,9 @@ pack.setDefaultWhileWritingTrigger({
   assistMode: sdk.ContextualTriggerAssistMode.Balanced,
 });
 
-// Drafting runs on its own, so documents appear without anyone asking: each hour on weekdays it drafts the next
-// two Ready jobs. A schedule can fire at most once an hour, and each run fits the per-reply time limit.
+// Drafting runs on its own, so documents appear without anyone asking: every hour (the most often a schedule may
+// fire) it drafts the next two Ready jobs, so new jobs get documents within the hour. Go has no trigger for new
+// rows in a doc. Runs with nothing to draft stop straight away.
 // Installs paused, like every routine: the user turns it on once.
 pack.addDefaultRoutine({
   name: "Draft documents for new jobs",
@@ -189,6 +190,6 @@ Don't send any email.
 `,
   trigger: {
     kind: sdk.DefaultTriggerKind.Schedule,
-    rruleString: "DTSTART:20261102T080000\nRRULE:FREQ=HOURLY;BYDAY=MO,TU,WE,TH,FR;BYHOUR=8,9,10,11,12,13,14,15,16,17,18,19,20",
+    rruleString: "DTSTART:20261101T000000\nRRULE:FREQ=HOURLY",
   },
 });
