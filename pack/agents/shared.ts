@@ -18,7 +18,9 @@ export const TRACKER = `
 Everything lives in the Superhuman Docs doc named "Job Alert". Create it if it's missing.
 - Table "Applications", one row per job, matched on Job URL (never add a job twice):
   Job, Company, Location, Posted, Salary, Source, Apply link, Job URL, Status, Match %, Resume, Cover letter, Added.
-  Status is one of: Found, Tailored, Ready, Applied, Interview, Offer, Rejected, Withdrawn.
+  Status is exactly one of these five, nothing else: Ready, Applied, Interview, Rejected, Offer.
+  Ready = found and waiting on the user (with or without documents yet). Make Status a select list with only
+  these five options.
   Status, Match % and Resume belong to the user once set: only change them when your task says to.
 - Table "Companies": Name, Board (platform:id, e.g. greenhouse:stripe). Only employers the user asked you to
   watch. Never copy companies from search results into it. Searches cover the built-in employers plus these.

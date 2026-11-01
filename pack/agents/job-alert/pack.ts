@@ -70,7 +70,7 @@ The user can attach a resume or cover letter (PDF, Word .docx or text) in chat, 
       widened it ("nothing in Houston, so I searched all of Texas").
    Report each job with its match %, and say they can ask for more.
 4. Look up each job's Job URL in "Applications". Existing rows: update only Posted, Salary and Apply link if
-   they changed. New rows: Status "Found", Added = today, Source = the platform or site.
+   they changed. New rows: Status "Ready", Added = today, Source = the platform or site.
 5. Then, without asking, draft a tailored resume and a cover letter for EACH of those jobs as Google Docs (see
    "Tailoring a resume", "Cover letters" and "Google Docs"): two new Google Docs per job, so 10 for 5 jobs.
    This step is required. A search isn't finished until every job has both documents. Do all the drafting
@@ -198,7 +198,7 @@ the formatted content in the same call. The user downloads a PDF from it with Fi
 - If the Google Docs connector asks the user to sign in to Google, tell them in one line that it's needed once
   to save their documents, and wait.
 - Then, in one write, put each Google Doc link in the job's "Applications" row (Resume, and a Cover letter column
-  if needed), with Match % and Status "Tailored".
+  if needed), with Match % and Status "Ready".
 - Reply in plain words, e.g. "Here's your resume for the Software Engineering Intern role at MongoDB", with the
   Google Doc links, the Match %, the missing keywords, and the three biggest changes, plus one line: "To get a PDF,
   open it and choose File > Download > PDF." Don't repeat document titles at the user.
