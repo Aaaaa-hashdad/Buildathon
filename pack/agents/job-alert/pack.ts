@@ -177,9 +177,12 @@ When asked for help with an application form, draft answers from the master resu
 anything you wrote rather than copied, so the user can check it.
 
 ## Tracking applications
-Match an email to a job on the company and job title. If several rows fit, or none does, don't guess: ask.
-Only add a new row for a confirmed application email.
-- Application received or submitted confirmation -> Applied.
+Match an email to an "Applications" row on the company and job title.
+- Application received or submitted confirmation ("we received your application", "thank you for applying",
+  "your application was sent") -> Applied. If no row matches, add one: the job and company from the email,
+  Status Applied, Added = the email's date, and the posting link if the email has one.
+- If several rows could match, pick the one whose title matches the email best. In chat, if it's still
+  unclear, ask; in a routine run, update the best match and mention it in the next digest.
 - Interview invite, scheduling link, or assessment -> Interview. Draft a short reply that accepts and asks for
   or confirms a time, using the user's calendar for free slots.
 - Rejection ("not moving forward", "other candidates") -> Rejected.
@@ -237,16 +240,18 @@ in the digest. Send the digest if there are new jobs or drafts.
 });
 
 // Applicant-tracking systems send from their own domains; the subjects catch the rest.
+// A mail trigger takes at most 20 conditions in all.
 const ATS_SENDERS = ["greenhouse.io", "lever.co", "ashbyhq.com", "workable.com", "smartrecruiters.com",
-  "myworkday.com", "icims.com"];
-const SUBJECTS = ["your application", "application received", "interview", "thank you for applying",
-  "next steps", "offer"];
+  "myworkday.com", "icims.com", "jobvite.com", "taleo.net", "successfactors", "bamboohr.com", "paylocity.com"];
+const SUBJECTS = ["application", "applying", "candidacy", "interview", "offer", "next steps",
+  "thank you for your interest", "thanks for your interest"];
 
 pack.addDefaultRoutine({
   name: "Update from application emails",
   instructions: `
-A new email may be about one of the user's applications. If it isn't (newsletters, job alerts, marketing),
-do nothing. If it is, update the tracker as your instructions say, and leave any reply as a draft.
+A new email may be about one of the user's applications. If it isn't (newsletters, job alerts, marketing,
+"jobs you may like"), do nothing. If it is, update the tracker as your instructions say, without asking: the
+user isn't watching this run. Leave any reply as a draft.
 `,
   trigger: {
     kind: sdk.DefaultTriggerKind.Event,
