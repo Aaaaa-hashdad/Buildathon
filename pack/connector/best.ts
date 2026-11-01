@@ -107,6 +107,39 @@ function inCountry(location: string, country: string): boolean {
   return !NOT_US.test(location) || /\b(us|usa|united states)\b/i.test(location);
 }
 
+/**
+ * Whether a graduation year meets the posting's graduation requirement. Reads the sentences that mention
+ * graduating or a class year: "between Fall 2027 and Summer 2028", "by June 2028", "in 2027 or 2028",
+ * "Class of 2028", "after December 2027". A posting with no graduation requirement fits.
+ */
+export function fitsGraduation(description: string, year: number): boolean {
+  if (!year) {
+    return true;
+  }
+  const sentences = description.replace(/\n+/g, ". ").split(/(?<=[.!?;])\s+/)
+    .filter(s => /\b(graduat\w*|class of|grad date|degree expected|expected (degree|to graduate|graduation))\b/i.test(s) &&
+      /\b20\d\d\b/.test(s));
+  for (const s of sentences) {
+    const years = (s.match(/\b20\d\d\b/g) || []).map(Number);
+    let ok: boolean;
+    if (/\bbetween\b/i.test(s) && years.length >= 2) {
+      ok = year >= Math.min(...years) && year <= Math.max(...years);
+    } else if (/\b(by|before|no later than|prior to)\b/i.test(s)) {
+      ok = year <= Math.max(...years);
+    } else if (/\b(after|or later|onward)\b/i.test(s)) {
+      ok = year >= Math.min(...years);
+    } else if (/\b(to|through|-|–)\b/.test(s) && years.length === 2) {
+      ok = year >= Math.min(...years) && year <= Math.max(...years);
+    } else {
+      ok = years.includes(year);
+    }
+    if (!ok) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /** For a bachelor's student: drop high-school roles and ones only open to master's or PhD students ("BS/MS/PhD" stays). */
 function fitsDegree(j: BestJob, degree: string): boolean {
   if (degree.toLowerCase() !== "bachelors") {
@@ -123,6 +156,23 @@ function fitsDegree(j: BestJob, degree: string): boolean {
   return !(graduate.test(j.eligibility) && !undergrad.test(j.eligibility));
 }
 
+/** The highest degree a resume shows: "phd", "masters" or "bachelors" ("" if it doesn't say). */
+export function degreeOf(resume: string): string {
+  if (/\b(ph\.?\s?d|doctor(ate|al))\b/i.test(resume)) {
+    return "phd";
+  }
+  if (/\b(m\.?\s?s\.?|m\.?\s?eng|master'?s|mba)\b/.test(resume) || /\bmaster'?s\b/i.test(resume)) {
+    return "masters";
+  }
+  return /\b(b\.?\s?s\.?|b\.?\s?a\.?|b\.?\s?eng|bachelor'?s?)\b/i.test(resume) ? "bachelors" : "";
+}
+
+/** The (expected) graduation year a resume gives: "Expected May 2029" -> 2029; 0 if it doesn't say. */
+export function graduationYearOf(resume: string): number {
+  const m = resume.match(/\b(expected|anticipated|graduat\w*|class of)\b[^.\n]{0,30}?\b(20\d\d)\b/i);
+  return m ? Number(m[2]) : 0;
+}
+
 export async function findBestJobs(context: sdk.ExecutionContext, opts: {
   titles: string[];
   resume: string;
@@ -132,8 +182,11 @@ export async function findBestJobs(context: sdk.ExecutionContext, opts: {
   count?: number;
   country?: string;
   degree?: string;
+  graduationYear?: number;
   widened?: "state" | "country" | "titles";
 }): Promise<BestJob[]> {
+  // Education filters come from the resume when they aren't given, so they always apply.
+  opts = { ...opts, degree: opts.degree || degreeOf(opts.resume), graduationYear: opts.graduationYear || graduationYearOf(opts.resume) };
   const queries = opts.titles.map(t => t.trim()).filter(Boolean);
   if (!queries.length) {
     throw new sdk.UserVisibleError("Give at least one job title to search for.");
@@ -182,6 +235,10 @@ export async function findBestJobs(context: sdk.ExecutionContext, opts: {
   const scored: BestJob[] = full
     .map((r, i) => (r.status === "fulfilled" ? { ...r.value, location: shortlist[i].location } : undefined))
     .filter((j): j is Job => Boolean(j))
+    .filter(j => fitsGraduation(j.description, opts.graduationYear || 0))
+    // Graduating more than a year from now: full-time roles need a finished degree, so only student roles fit.
+    .filter(j => !opts.graduationYear || opts.graduationYear <= new Date().getFullYear() + 1 ||
+      /\b(intern|interns|internship|co-?op|student|apprentice\w*)\b/i.test(j.title))
     .map(j => {
       const { description, ...rest } = j;
       return {

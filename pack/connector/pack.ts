@@ -244,6 +244,13 @@ pack.addFormula({
       description: "'bachelors' drops roles open only to master's or PhD students. Blank = no filter.",
       optional: true,
     }),
+    sdk.makeParameter({
+      type: sdk.ParameterType.Number,
+      name: "graduationYear",
+      description: "The user's (expected) graduation year, e.g. 2029. Drops jobs whose posting requires a " +
+        "graduation date the user can't meet. Blank = no filter.",
+      optional: true,
+    }),
   ],
   resultType: sdk.ValueType.Array,
   items: sdk.makeObjectSchema({
@@ -263,9 +270,9 @@ pack.addFormula({
     displayProperty: "title",
   }),
   execute: async function ([titles, resume, location = "", exclude = [], count = 20, companies = [], country = "",
-    onlyTheseCompanies = false, degree = ""], context) {
+    onlyTheseCompanies = false, degree = "", graduationYear = 0], context) {
     return findBestJobs(context, {
-      titles, resume, location, exclude, count, country, degree,
+      titles, resume, location, exclude, count, country, degree, graduationYear,
       companies: onlyTheseCompanies && companies.length ? companies : [...new Set([...companies, ...DEFAULT_COMPANIES])],
     });
   },

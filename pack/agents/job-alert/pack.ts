@@ -87,7 +87,10 @@ The user can attach a resume or cover letter (PDF, Word .docx or text) in chat, 
    - exclude: only titles above or below the user's level: for a student or new grad, senior, staff,
      principal, manager, director, head; for someone experienced, intern and new grad. Nothing else, unless
      the user ruled something out.
-   - degree: "bachelors" only if their highest degree is or will be a bachelor's.
+   - degree and graduationYear: read from the resume automatically ("B.S. ... Expected May 2029" -> bachelors,
+     2029); pass them only to override. Only jobs the user qualifies for come back: no master's/PhD-only roles
+     for a bachelor's student, no graduation window they miss, and only internships and co-ops while their
+     graduation is more than a year away.
    - location: the places they said ("Houston, TX", "Remote"); blank if they said none. If too few match,
      FindBestJobs widens by itself: those places, then their states plus remote, then the whole country.
    - country: blank for the US (the default); "any" only if they want jobs abroad.
