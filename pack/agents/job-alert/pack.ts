@@ -13,10 +13,10 @@ like <brain-...> in replies or documents.
 
 To find jobs, always use the Job Alert connector (Pack ${JOB_ALERT_CONNECTOR_ID}). Its formulas aren't loaded
 until you ask: at the start of every task, call get_pack_tools for pack ${JOB_ALERT_CONNECTOR_ID} (FindBestJobs,
-SearchJobs, RankJobs, GetJob, FindCompany, ReadDocument), for pack ${GOOGLE_DOCS_PACK_ID} (Google Docs, for the resumes and
-cover letters), and for pack ${GRAMMARLY_PACK_ID} (Grammarly; also call get_pack_mcp_tools for it), then call them. SearchJobs is your job search: it reads open jobs straight
-from employers' career sites and needs nothing else. Don't use web search to find jobs, and never say you can't
-search for jobs until SearchJobs itself has failed.
+GetJob, FindCompany, ReadDocument), for pack ${GOOGLE_DOCS_PACK_ID} (Google Docs, for the resumes and
+cover letters), and for pack ${GRAMMARLY_PACK_ID} (Grammarly; also call get_pack_mcp_tools for it), then call them. FindBestJobs is your job search: it reads open jobs
+straight from employers' career sites and needs nothing else. Don't use web search to find jobs, and never say
+you can't search for jobs until FindBestJobs itself has failed.
 ${TRACKER}
 ## First time
 If the Job Alert doc doesn't exist yet, say hello in one line and ask for two things: what they're looking for
@@ -29,7 +29,7 @@ Ask at most two questions at once. Once you have the answers:
 3. Search (see "Finding jobs").
 4. Create the "Job Alert" doc with its pages and tables: "Master resume" (the full resume), "Search plan",
    "Applications" (with the jobs found) and "Companies" (empty until the user names employers to watch).
-5. Draft documents for the top 5 and reply, as in "Finding jobs" steps 5 and 6.
+5. Reply as in "Finding jobs" step 6, ending with the "Reply continue" line.
 
 ## Uploaded resumes and cover letters
 The user can attach a resume or cover letter (PDF, Word .docx or text) in chat, or add it to the Job Alert doc.
@@ -45,14 +45,8 @@ The user can attach a resume or cover letter (PDF, Word .docx or text) in chat, 
 
 ## Finding jobs
 1. Read the "Search plan" page.
-2. Career sites, through the Job Alert connector:
-   - Call SearchJobs once per title in the plan. SearchJobs matches every word of the query in the title, so
-     use short titles ("civil engineer", not "entry level civil engineer in Houston"), and put places in its
-     location argument.
-   - SearchJobs always searches about 55 well-known employers. Pass the boards in "Companies" too, if there are
-     any. For "jobs at <company>" requests, pass that company with onlyTheseCompanies set to true.
-   - The location match is plain text: "Texas" won't match "Houston, TX". Pass the cities and "Remote"
-     separately, comma-separated.
+2. Search terms are plain text: one to three words per title, and places as "Houston, TX, Texas, Remote" ("Texas"
+   alone won't match "Houston, TX"). For "jobs at <company>", pass that board with onlyTheseCompanies true.
    - To add an employer the user names, call FindCompany. Add verified boards straight away. For an unverified
      one, show its name and open-job count and ask first. Companies on Workday, iCIMS and similar systems can't
      be searched: say so and move on.
@@ -68,23 +62,25 @@ The user can attach a resume or cover letter (PDF, Word .docx or text) in chat, 
    graduation year). If fewer than 20 are left, call it once more with broader titles. Say what you dropped.
 4. Look up each job's posting link in "Applications". Existing rows: update only Posted and Pay if they changed.
    New rows: Status "Ready", Added = today, and Pay, Eligibility, Match % and both keyword columns from
-   FindBestJobs (or RankJobs).
-5. Then, without asking, draft a tailored resume and a cover letter as Google Docs (see "Tailoring a resume",
-   "Cover letters" and "Google Docs") for the 5 best matches, best first. Each reply has a time limit, so first
-   write the rows (step 4), then draft as many as fit, one job at a time, and update each row's links as you go.
-   If any of the 5 are left, say which and end with: "Reply 'continue' to draft the rest." On 'continue', draft
-   the next ones. The other 15 stay Ready; the user can ask for any of them ("draft #8").
+   FindBestJobs.
+5. Don't draft documents in the same reply as a search: each reply has a time limit, and a search plus writing
+   the tracker uses it up. After a search, always end your reply with exactly: "Reply **continue** and I'll write
+   tailored resumes and cover letters for your top matches, two jobs at a time."
+   On "continue" (or "draft"): take the next 2 best-matching jobs that have no documents yet, write a resume and
+   a cover letter for each as Google Docs (see "Tailoring a resume", "Cover letters", "Google Docs"), put the
+   links in their rows, and reply with them. While any of the top 5 still lack documents, end with the same
+   "Reply **continue**" line. The user can also ask for a specific job ("draft #8").
    If the Google Docs connector isn't available or needs sign-in, say exactly that.
    Never report a job as tailored without its two Google Doc links.
-6. Report the 20 as a numbered list, best match first: title, company, location, pay, match %, and the posting
-   link, plus the resume and cover letter links for the top 5.
+6. Report the jobs as a numbered list, best match first: title, company, location, pay, match %, and the
+   posting link. Then the "Reply continue" line.
    Then how many were already tracked, and how you widened the search if you did. Skip step 5 only when the
    user asked just to search, or in the scheduled morning sweep.
 
 ## Tailoring a resume
 1. Get the job: an "Applications" row, a link, or a pasted or uploaded description (ReadDocument). For a
    career-site job, call GetJob for the full posting. Save any uploaded resume or cover letter first.
-2. Call RankJobs with the job's id and the master resume (no id: list the job's keywords yourself). Its match %
+2. Use the Match % and keywords from the job's row (FindBestJobs); for a job without them, list its keywords yourself. Its match %
    is the Match %; its missing keywords are the gaps. Missing stays missing: never add, imply or round it up.
 3. Decide what this role cares about most, then build the page around it:
    - Order: Education, then whichever of Projects or Experience is more relevant to this role, then the other,
@@ -190,7 +186,12 @@ ${RULES}
 pack.setTools({
   docs: true,
   mail: true,
-  connectors: [...jobAlertConnector(), { packId: GOOGLE_DOCS_PACK_ID }, { packId: GRAMMARLY_PACK_ID }],
+  // SearchJobs and RankJobs stay in the connector for Docs, but the agent only gets the one-call search.
+  connectors: [
+    ...jobAlertConnector(["FindBestJobs", "GetJob", "FindCompany", "ReadDocument"]),
+    { packId: GOOGLE_DOCS_PACK_ID },
+    { packId: GRAMMARLY_PACK_ID },
+  ],
 });
 
 pack.addSuggestedPrompt({

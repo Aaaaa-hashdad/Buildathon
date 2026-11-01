@@ -232,6 +232,12 @@ pack.addFormula({
       description: "'US' keeps only US places and remote jobs that don't name another country. Blank = anywhere.",
       optional: true,
     }),
+    sdk.makeParameter({
+      type: sdk.ParameterType.Boolean,
+      name: "onlyTheseCompanies",
+      description: "Search only the companies given, not the built-in employers too.",
+      optional: true,
+    }),
   ],
   resultType: sdk.ValueType.Array,
   items: sdk.makeObjectSchema({
@@ -250,11 +256,11 @@ pack.addFormula({
     },
     displayProperty: "title",
   }),
-  execute: async function ([titles, resume, location = "", exclude = [], count = 20, companies = [], country = ""],
-    context) {
+  execute: async function ([titles, resume, location = "", exclude = [], count = 20, companies = [], country = "",
+    onlyTheseCompanies = false], context) {
     return findBestJobs(context, {
       titles, resume, location, exclude, count, country,
-      companies: [...new Set([...companies, ...DEFAULT_COMPANIES])],
+      companies: onlyTheseCompanies && companies.length ? companies : [...new Set([...companies, ...DEFAULT_COMPANIES])],
     });
   },
 });
