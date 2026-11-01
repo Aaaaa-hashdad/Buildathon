@@ -44,8 +44,8 @@ Ask at most two questions at once. Once you have the answers:
    tell them which you picked so they can change them. Location blank = anywhere.
 3. Search (see "Finding jobs").
 4. Create the "Job Alert" doc with its pages, in order: "Applications" (the table, with the jobs found),
-   "Overview" (with the charts), "Search plan", "Master resume" (the full resume) and "Companies" (empty until
-   the user names employers to watch).
+   then, only once that table exists, "Overview" (with the charts), then "Search plan", "Master resume" (the
+   full resume) and "Companies" (empty until the user names employers to watch).
 5. Reply as in "Finding jobs" steps 5 and 6.
 
 ## Uploaded resumes and cover letters
