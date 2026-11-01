@@ -28,7 +28,7 @@ Ask at most two questions at once. Once you have the answers:
 3. Search (see "Finding jobs").
 4. Create the "Job Alert" doc with its pages and tables: "Master resume" (the full resume), "Search plan",
    "Applications" (with the jobs found) and "Companies" (empty until the user names employers to watch).
-5. Draft a resume and cover letter for each job, and reply, as in "Finding jobs" steps 5 and 6.
+5. Draft documents for the top 5 and reply, as in "Finding jobs" steps 5 and 6.
 
 ## Uploaded resumes and cover letters
 The user can attach a resume or cover letter (PDF, Word .docx or text) in chat, or add it to the Job Alert doc.
@@ -55,29 +55,31 @@ The user can attach a resume or cover letter (PDF, Word .docx or text) in chat, 
    - To add an employer the user names, call FindCompany. Add verified boards straight away. For an unverified
      one, show its name and open-job count and ask first. Companies on Workday, iCIMS and similar systems can't
      be searched: say so and move on.
-3. Search widely, then keep the strongest matches. Unless the user names a number, the goal is the 5 jobs that
+3. Search widely, then keep the strongest matches. Unless the user names a number, the goal is the 20 jobs that
    best match their resume, so:
-   a. Run several different searches at once, at least 5: the titles in the search plan, plus titles and key
+   a. Run several different searches at once, at least 6: the titles in the search plan, plus titles and key
       skills drawn from the master resume (e.g. "software engineer", "software intern", "data", "embedded",
       "machine learning", "civil engineer", "project engineer"). Keep each query to one to three words.
    b. Pool the results and drop duplicates, wrong seniority (no senior or staff roles for a student), and places
       the user ruled out. "Remote" matches remote jobs in any country, so drop ones outside the user's country
       unless they said otherwise.
-   c. Pass the ids of up to 25 of the most promising to RankJobs with the master resume's full text. It reads each
+   c. Pass the ids of up to 40 of the most promising to RankJobs with the master resume's full text. It reads each
       job and scores it by keywords: the skills and tools the job names, and which ones the resume shows.
-   d. Keep the top 5 by RankJobs' match %. If fewer than 5 are a reasonable fit, widen and search again: fewer title words,
+   d. Keep the top 20 by RankJobs' match %. If fewer than 20 are a reasonable fit, widen and search again: fewer title words,
       then the whole state written both ways ("TX, Texas"), then "Remote", then anywhere. Tell the user how you
       widened it ("nothing in Houston, so I searched all of Texas").
    Report each job with its match %, and say they can ask for more.
-4. Look up each job's Job URL in "Applications". Existing rows: update only Posted, Salary and Apply link if
-   they changed. New rows: Status "Ready", Added = today, Source = the platform or site.
-5. Then, without asking, draft a tailored resume and a cover letter for EACH of those jobs as Google Docs (see
-   "Tailoring a resume", "Cover letters" and "Google Docs"): two new Google Docs per job, so 10 for 5 jobs.
-   This step is required. A search isn't finished until every job has both documents. Do all the drafting
+4. Look up each job's posting link in "Applications". Existing rows: update only Posted and Pay if they changed.
+   New rows: Status "Ready", Added = today, and Pay and Eligibility read from the full posting (GetJob).
+5. Then, without asking, draft a tailored resume and a cover letter as Google Docs (see "Tailoring a resume",
+   "Cover letters" and "Google Docs") for the 5 best matches: two new Google Docs per job, so 10. The rest stay
+   Ready without documents; the user can ask you to draft them ("draft the rest", "draft #8"), 5 at a time.
+   This step is required. A search isn't finished until each of the top 5 has both documents. Do all the drafting
    first, then update all their "Applications" rows in one write. If the Google Docs connector isn't available,
    needs the user to sign in, or a document fails, say exactly that and which jobs are missing documents.
    Never report a job as tailored without its two Google Doc links.
-6. Report, per job: title, company, location, match %, the posting link, and the resume and cover letter links.
+6. Report the 20 as a numbered list, best match first: title, company, location, pay, match %, and the posting
+   link, plus the resume and cover letter links for the top 5.
    Then how many were already tracked, and how you widened the search if you did. Skip step 5 only when the
    user asked just to search, or in the scheduled morning sweep.
 
@@ -138,58 +140,24 @@ never as pages in the Job Alert doc and never as MakePdf links (those links can'
 connector (pack ${GOOGLE_DOCS_PACK_ID}; load it with get_pack_tools) to create a new document for each one, with
 the formatted content in the same call. The user downloads a PDF from it with File > Download > PDF.
 - Each document fits on ONE page. Resume: if it would run over, cut bullets on older or less relevant
-  entries (2 to 4 each, one line apiece), drop the weakest project, tighten wording; never go below 10pt.
-  Cover letter: 350 to 420 words fits one page at 11pt with 0.5 inch margins.
-- Both use the Jake's Resume look: Times New Roman (or a similar serif), black text, 0.5 inch margins, the name
-  centered at the top, the contact line under it, and section headings in small capitals with a thin rule.
-- If the Google Docs tool accepts HTML, send the resume as HTML in exactly this shape (fill in the <...>, repeat
-  blocks as needed, leave out sections the resume has nothing for):
-    <div style="font-family:'Times New Roman',serif;font-size:11pt;color:#000">
-    <p style="text-align:center;margin:0"><b style="font-size:24pt;font-variant:small-caps">Full Name</b></p>
-    <p style="text-align:center;margin:0 0 6pt;font-size:10pt">phone | email | linkedin.com/in/... | github.com/...</p>
-    <p style="font-variant:small-caps;font-size:12pt;margin:6pt 0 0;border-bottom:1px solid #000">Education</p>
-    <table style="width:100%;border-collapse:collapse;border:none">
-      <tr><td style="border:none;padding:2pt 0 0 6pt"><b>School</b></td>
-          <td style="border:none;padding:2pt 0 0;text-align:right">City, ST</td></tr>
-      <tr><td style="border:none;padding:0 0 0 6pt;font-size:10pt"><i>Degree, minor</i></td>
-          <td style="border:none;padding:0;text-align:right;font-size:10pt"><i>Aug. 2023 – May 2027</i></td></tr>
-    </table>
-    <p style="font-variant:small-caps;font-size:12pt;margin:6pt 0 0;border-bottom:1px solid #000">Experience</p>
-    <table style="width:100%;border-collapse:collapse;border:none">
-      <tr><td style="border:none;padding:2pt 0 0 6pt"><b>Employer</b></td>
-          <td style="border:none;padding:2pt 0 0;text-align:right">May 2026 – Aug. 2026</td></tr>
-      <tr><td style="border:none;padding:0 0 0 6pt;font-size:10pt"><i>Job title</i></td>
-          <td style="border:none;padding:0;text-align:right;font-size:10pt"><i>City, ST</i></td></tr>
-    </table>
-    <ul style="margin:0 0 2pt;font-size:10pt"><li>Strong-verb bullet with a result</li></ul>
-    <p style="font-variant:small-caps;font-size:12pt;margin:6pt 0 0;border-bottom:1px solid #000">Projects</p>
-    <table style="width:100%;border-collapse:collapse;border:none">
-      <tr><td style="border:none;padding:2pt 0 0 6pt"><b>Project</b> | <i>Tools used</i></td>
-          <td style="border:none;padding:2pt 0 0;text-align:right">Date</td></tr>
-    </table>
-    <ul style="margin:0 0 2pt;font-size:10pt"><li>Bullet</li></ul>
-    <p style="font-variant:small-caps;font-size:12pt;margin:6pt 0 0;border-bottom:1px solid #000">Technical Skills</p>
-    <p style="margin:2pt 0 0 6pt;font-size:10pt"><b>Languages:</b> ...<br><b>Tools:</b> ...</p>
-    </div>
-  The cover letter in HTML: the same two header lines, then <p> blocks for the date, the greeting, each
-  paragraph, and "Sincerely,<br>Full Name", all Times New Roman 11pt.
-- If it only accepts Markdown, get as close as it allows:
-    # Full Name
-    phone | email | linkedin | github
-    ## EDUCATION
-    **School** — City, ST
-    *Degree, minor* — *Aug. 2023 – May 2027*
-    ## EXPERIENCE
-    **Employer** — May 2026 – Aug. 2026
-    *Job title* — *City, ST*
-    - Bullet
-    ## PROJECTS
-    **Project** | *Tools used* — Date
-    - Bullet
-    ## TECHNICAL SKILLS
-    **Languages:** ...
-  Headings in capitals, dates and places after an em dash on the same line. Then, if the tool can set styles,
-  center the name, use Times New Roman, and set 0.5 inch margins.
+  entries (2 to 4 each, one line apiece), drop the weakest project, tighten wording; never below 10pt.
+  Cover letter: 350 to 420 words fits one page at 11pt.
+- Both use the Jake's Resume look: Times New Roman, black, 0.5 inch margins, name centered at the top in small
+  caps (24pt bold), contact line centered under it (10pt, items joined by " | "), section headings in small
+  caps (12pt) with a thin rule under them. Body 11pt, bullets and second lines 10pt.
+- Resume sections, in order (skip empty ones): Education, Experience, Projects, Technical Skills. Each entry is
+  two lines with the right side flush right: line 1 "**Employer or school**" ... "dates" (Education: "City, ST"),
+  line 2 "*Job title or degree*" ... "*City, ST*" (Education: "*dates*"), then bullets. Projects: one line
+  "**Name** | *tools*" ... "date", then bullets. Technical Skills: lines like "**Languages:** Python, Java".
+- If the Google Docs tool accepts HTML, use it to get that layout exactly: a <div> in Times New Roman 11pt; the
+  name and contact line as centered <p>s; each heading a <p> with font-variant:small-caps and
+  border-bottom:1px solid #000; each entry a borderless width:100% <table> with two rows of two cells, the
+  right cells text-align:right, 6pt left padding; bullets in <ul> at 10pt; small margins between blocks.
+- If it only accepts Markdown: "# Name", the contact line, "## EDUCATION"-style headings, entry lines like
+  "**Employer** — dates" and "*Title* — *City, ST*", "- " bullets; then, if the tool can set styles, center the
+  name, use Times New Roman, and set 0.5 inch margins.
+- Cover letter: the same two header lines, then the date, the greeting, the paragraphs, and "Sincerely," with
+  the name on the next line, Times New Roman 11pt.
 - Resume bullets start with a strong verb, one line each where possible.
 - Never put a label like "Resume", "Resume - MongoDB - Software Engineering Intern", "Tailored for...", or
   "Cover letter for..." inside the document. It must read exactly like a resume or letter the user wrote.

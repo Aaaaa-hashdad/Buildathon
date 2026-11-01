@@ -199,7 +199,7 @@ pack.addFormula({
     sdk.makeParameter({
       type: sdk.ParameterType.StringArray,
       name: "jobIds",
-      description: "Job ids from SearchJobs (greenhouse:stripe:12345). Up to 25.",
+      description: "Job ids from SearchJobs (greenhouse:stripe:12345). Up to 40.",
     }),
     sdk.makeParameter({
       type: sdk.ParameterType.String,
@@ -222,7 +222,7 @@ pack.addFormula({
     displayProperty: "title",
   }),
   execute: async function ([jobIds, resume], context) {
-    const jobs = await Promise.allSettled(jobIds.slice(0, 25).map(id => getJob(context, id)));
+    const jobs = await Promise.allSettled(jobIds.slice(0, 40).map(id => getJob(context, id)));
     return jobs
       .filter((r): r is PromiseFulfilledResult<Job> => r.status === "fulfilled")
       .map(({ value: j }) => ({
