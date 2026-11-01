@@ -11,9 +11,10 @@ export const GOOGLE_DOCS_PACK_ID = 68620;
 // Grammarly, published by Grammarly as a Go agent. Every resume and cover letter goes through it.
 export const GRAMMARLY_PACK_ID = 43834;
 
-// Job Alert starts the Writer with an email to the user's own inbox: Go has no other way for one agent to start
-// another. One email per two jobs, so each pair is drafted in its own run, inside the per-run time limit. The
-// subject avoids "application", "interview" and "offer", so Job Alert's own email routine ignores it.
+// Job Alert starts its own "Draft documents" runs with an email to the user's own inbox: Go has no other way to
+// start a run. One email per two jobs, so each pair is drafted in its own run, inside the per-run time limit,
+// all at the same time. The subject avoids "application", "interview" and "offer", so the email-tracking
+// routines ignore it.
 export const DRAFT_REQUEST_SUBJECT = "[Job Alert] New jobs to draft";
 
 export const DRAFT_REQUEST_FORMAT = `
@@ -54,7 +55,7 @@ no internal notes, and never a tool name (FindBestJobs, RankJobs), job id or boa
 - "Overview": the doc's first page (rename the "Untitled page" a new doc starts with; never leave one). A
   one-sentence summary of the search ("Internship and new-grad roles in software, embedded and electrical
   engineering, in Texas or remote in the US."), a small table of how many jobs are at each Status, and a
-  short "Next steps" list (e.g. "Review the 5 new matches", "Draft documents with Job Alert Writer").
+  short "Next steps" list (e.g. "Review the 5 new matches", "Apply to the top match").
   Below that, a "Dashboard" section with four charts, each titled and drawn from "Applications":
   1. Pipeline: jobs at each Status (Ready, Applied, Interview, Offer, Rejected), a bar chart.
   2. Match quality: Match % for each job, best first, a horizontal bar chart.
