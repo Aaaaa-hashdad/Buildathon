@@ -176,3 +176,19 @@ pack.setDefaultWhileWritingTrigger({
   surfaces: [sdk.ContextualTriggerSurface.Docs, sdk.ContextualTriggerSurface.Email],
   assistMode: sdk.ContextualTriggerAssistMode.Balanced,
 });
+
+// Drafting runs on its own, so documents appear without anyone asking: each hour on weekdays it drafts the next
+// two Ready jobs. A schedule can fire at most once an hour, and each run fits the per-reply time limit.
+// Installs paused, like every routine: the user turns it on once.
+pack.addDefaultRoutine({
+  name: "Draft documents for new jobs",
+  instructions: `
+Find the 2 best-matching "Applications" rows with Status Ready and no documents yet. If there are none, stop
+and do nothing. Otherwise draft both, as your instructions say, without asking: the user isn't watching.
+Don't send any email.
+`,
+  trigger: {
+    kind: sdk.DefaultTriggerKind.Schedule,
+    rruleString: "DTSTART:20261102T080000\nRRULE:FREQ=HOURLY;BYDAY=MO,TU,WE,TH,FR;BYHOUR=8,9,10,11,12,13,14,15,16,17,18,19,20",
+  },
+});

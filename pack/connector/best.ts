@@ -56,8 +56,21 @@ export function eligibilityOf(text: string): string {
   return hit ? hit.replace(/^[-•*\s]+/, "").replace(/\.{2,}$/, ".").trim() : "";
 }
 
-// Places that clearly aren't in the US, for the country filter.
-const NOT_US = /\b(canada|toronto|vancouver|montreal|uk|united kingdom|england|london|ireland|dublin|germany|berlin|munich|france|paris|spain|madrid|netherlands|amsterdam|switzerland|zurich|poland|warsaw|india|bangalore|bengaluru|hyderabad|singapore|japan|tokyo|australia|sydney|brazil|mexico|israel|tel aviv|china|korea|seoul|taiwan|emea|apac|latam)\b/i;
+// Places that clearly aren't in the US, for the country filter: countries, regions, and cities often given alone.
+const NOT_US = new RegExp("\\b(" + [
+  "canada", "mexico", "brazil", "argentina", "chile", "colombia", "peru", "uruguay", "costa rica",
+  "uk", "united kingdom", "england", "scotland", "wales", "ireland", "france", "germany", "spain", "portugal",
+  "italy", "netherlands", "belgium", "luxembourg", "switzerland", "austria", "denmark", "sweden", "norway",
+  "finland", "iceland", "poland", "czech", "czechia", "slovakia", "hungary", "romania", "bulgaria", "serbia",
+  "croatia", "slovenia", "greece", "turkey", "ukraine", "estonia", "latvia", "lithuania", "israel", "uae",
+  "united arab emirates", "saudi arabia", "qatar", "egypt", "nigeria", "kenya", "south africa", "india",
+  "pakistan", "bangladesh", "sri lanka", "singapore", "malaysia", "indonesia", "philippines", "vietnam",
+  "thailand", "japan", "korea", "china", "hong kong", "taiwan", "australia", "new zealand",
+  "toronto", "vancouver", "montreal", "london", "dublin", "paris", "berlin", "munich", "amsterdam", "zurich",
+  "madrid", "barcelona", "lisbon", "warsaw", "krakow", "prague", "aarhus", "copenhagen", "stockholm", "oslo",
+  "helsinki", "belgrade", "bucharest", "tel aviv", "bangalore", "bengaluru", "hyderabad", "pune", "tokyo",
+  "seoul", "sydney", "melbourne", "sao paulo", "emea", "apac", "latam",
+].join("|") + ")\\b", "i");
 
 /** For country "US": keep US places and remote jobs that don't name another country. */
 function inCountry(location: string, country: string): boolean {
@@ -65,6 +78,22 @@ function inCountry(location: string, country: string): boolean {
     return true;
   }
   return !NOT_US.test(location) || /\b(us|usa|united states)\b/i.test(location);
+}
+
+/** For a bachelor's student: drop high-school roles and ones only open to master's or PhD students ("BS/MS/PhD" stays). */
+function fitsDegree(j: BestJob, degree: string): boolean {
+  if (degree.toLowerCase() !== "bachelors") {
+    return true;
+  }
+  if (/\bhigh school\b/i.test(j.title)) {
+    return false;
+  }
+  const undergrad = /\b(bs|ba|b\.s|bachelor'?s?|undergrad\w*)\b/i;
+  const graduate = /\b(ms|m\.s|master'?s?|ph\.?d|graduate degree|doctoral)\b/i;
+  if (graduate.test(j.title) && !undergrad.test(j.title)) {
+    return false;
+  }
+  return !(graduate.test(j.eligibility) && !undergrad.test(j.eligibility));
 }
 
 export async function findBestJobs(context: sdk.ExecutionContext, opts: {
@@ -75,12 +104,17 @@ export async function findBestJobs(context: sdk.ExecutionContext, opts: {
   exclude?: string[];
   count?: number;
   country?: string;
+  degree?: string;
+  widened?: "places" | "titles";
 }): Promise<BestJob[]> {
   const queries = opts.titles.map(t => t.trim()).filter(Boolean);
   if (!queries.length) {
     throw new sdk.UserVisibleError("Give at least one job title to search for.");
   }
   const exclude = (opts.exclude || []).map(w => w.trim()).filter(Boolean);
+  if (exclude.some(w => /^senior$/i.test(w))) {
+    exclude.push("sr");           // "Sr. Software Engineer"
+  }
   const lists = await Promise.allSettled(opts.companies.map(c => listBoard(context, requireBoard(c), queries)));
 
   // Every job whose title matches any query, in the wanted places, without excluded words; one entry per job.
@@ -91,12 +125,20 @@ export async function findBestJobs(context: sdk.ExecutionContext, opts: {
     }
     for (const j of r.value) {
       const hits = queries.filter(q => titleMatches(j.title, q)).length;
-      const key = `${j.company}|${j.title}|${j.location}`.toLowerCase();
-      if (!hits || seen.has(key) || !locationMatches(j.location, j.workplace, opts.location || "") ||
+      // One entry per job title at a company: the same opening in three cities is one job with three places.
+      const key = `${j.company}|${j.title}`.toLowerCase();
+      if (!hits || !locationMatches(j.location, j.workplace, opts.location || "") ||
         !inCountry(j.location, opts.country || "")) {
         continue;
       }
       if (exclude.some(w => titleMatches(j.title, w))) {
+        continue;
+      }
+      const same = seen.get(key);
+      if (same) {
+        if (!same.job.location.includes(j.location)) {
+          same.job = { ...same.job, location: `${same.job.location}; ${j.location}` };
+        }
         continue;
       }
       seen.set(key, { job: j, hits });
@@ -111,8 +153,9 @@ export async function findBestJobs(context: sdk.ExecutionContext, opts: {
   const full = await Promise.allSettled(shortlist.map(j => (j.description ? Promise.resolve(j) : getJob(context, j.id))));
 
   const scored: BestJob[] = full
-    .filter((r): r is PromiseFulfilledResult<Job> => r.status === "fulfilled")
-    .map(({ value: j }) => {
+    .map((r, i) => (r.status === "fulfilled" ? { ...r.value, location: shortlist[i].location } : undefined))
+    .filter((j): j is Job => Boolean(j))
+    .map(j => {
       const { description, ...rest } = j;
       return {
         ...rest,
@@ -121,7 +164,19 @@ export async function findBestJobs(context: sdk.ExecutionContext, opts: {
         eligibility: eligibilityOf(description),
       };
     });
-  return scored
-    .sort((a, b) => b.matchPercent - a.matchPercent || a.missing.length - b.missing.length)
-    .slice(0, opts.count || 20);
+  const count = opts.count || 20;
+  const kept = scored
+    .filter(j => fitsDegree(j, opts.degree || ""))
+    .sort((a, b) => b.matchPercent - a.matchPercent || a.missing.length - b.missing.length);
+  if (kept.length >= count || opts.widened === "titles") {
+    return kept.slice(0, count);
+  }
+  // Too few: widen and top up, never returning fewer than we could have found. First drop the places (the
+  // country filter still applies), then broaden each title to its last word ("software engineer intern" -> "intern").
+  const wider = opts.location
+    ? { ...opts, location: "", widened: "places" as const }
+    : { ...opts, titles: [...new Set(queries.map(q => q.split(/\s+/).pop() || q))], widened: "titles" as const };
+  const more = await findBestJobs(context, { ...wider, count: count - kept.length + kept.length });
+  const ids = new Set(kept.map(j => j.id));
+  return [...kept, ...more.filter(j => !ids.has(j.id))].slice(0, count);
 }

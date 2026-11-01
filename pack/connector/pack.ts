@@ -238,6 +238,12 @@ pack.addFormula({
       description: "Search only the companies given, not the built-in employers too.",
       optional: true,
     }),
+    sdk.makeParameter({
+      type: sdk.ParameterType.String,
+      name: "degree",
+      description: "'bachelors' drops roles open only to master's or PhD students. Blank = no filter.",
+      optional: true,
+    }),
   ],
   resultType: sdk.ValueType.Array,
   items: sdk.makeObjectSchema({
@@ -257,9 +263,9 @@ pack.addFormula({
     displayProperty: "title",
   }),
   execute: async function ([titles, resume, location = "", exclude = [], count = 20, companies = [], country = "",
-    onlyTheseCompanies = false], context) {
+    onlyTheseCompanies = false, degree = ""], context) {
     return findBestJobs(context, {
-      titles, resume, location, exclude, count, country,
+      titles, resume, location, exclude, count, country, degree,
       companies: onlyTheseCompanies && companies.length ? companies : [...new Set([...companies, ...DEFAULT_COMPANIES])],
     });
   },
