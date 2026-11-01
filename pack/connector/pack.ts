@@ -227,7 +227,7 @@ pack.addFormula({
       .filter((r): r is PromiseFulfilledResult<Job> => r.status === "fulfilled")
       .map(({ value: j }) => ({
         id: j.id, title: j.title, company: j.company, location: j.location, jobUrl: j.jobUrl,
-        ...keywordMatch(resume, `${j.title}\n${j.description}`),
+        ...keywordMatch(resume, `${j.title}\n${j.description}`, j.company),
       }))
       .sort((a, b) => b.matchPercent - a.matchPercent || a.missing.length - b.missing.length);
   },

@@ -41,6 +41,8 @@ const TWO_LETTER = new Set(["ai", "ml", "ui", "ux", "qa", "rf", "pe", "fe", "it"
 // Common capitalized words and acronyms that aren't skills.
 const STOP = new Set([
   "we", "you", "our", "the", "and", "for", "with", "this", "that", "your", "are", "will", "all", "who", "us",
+  "amer", "emea", "apac", "latam", "anz", "na", "eu", "uk", "erg", "ergs", "esop", "rsu", "rsus", "401k", "ote",
+  "wfh", "nda", "w2", "e-verify", "everify", "ats", "jd", "yoe", "bs", "ba", "ms", "mba", "phd",
   "usa", "u.s", "eeo", "eoe", "llc", "inc", "ltd", "ceo", "cto", "hr", "pto", "faq", "ok", "etc", "ii", "iii", "iv",
   "ada", "dei", "ein", "tbd", "n/a", "am", "pm", "est", "pst", "cst", "mst", "q1", "q2", "q3", "q4", "nyc", "sf", "la",
   "remote", "hybrid", "onsite", "gdp", "gtm", "kpi", "kpis", "okr", "okrs", "roi", "b2b", "b2c", "saas",
@@ -90,10 +92,28 @@ export interface KeywordMatch {
   missing: string[];
 }
 
-export function keywordMatch(resume: string, description: string): KeywordMatch {
-  const wanted = jobKeywords(description);
+// Soft skills a resume shows through what it says, not the word itself.
+const SHOWN_BY: Record<string, RegExp> = {
+  leadership: /\b(lead|leads|led|leading|leader|captain|president|head of|managed|manage|mentor\w*)\b/i,
+  communication: /\b(present\w*|wrote|authored|taught|teach\w*|workshop\w*|communicat\w*)\b/i,
+  teamwork: /\b(team|teams|collaborat\w*|cross-functional)\b/i,
+  "problem solving": /\b(solv\w*|troubleshoot\w*|debug\w*|diagnos\w*)\b/i,
+  research: /\b(research\w*|study|studies|analy[sz]\w*)\b/i,
+  writing: /\b(wrote|authored|writ\w*|documentation|sops?)\b/i,
+  testing: /\b(test|tests|tested|unit test\w*|validation|validat\w*)\b/i,
+  "project management": /\b(managed|led|coordinat\w*|planned|scheduling)\b/i,
+};
+
+/** The company's own name and the job's place words aren't skills to match. */
+function notSkills(company: string): Set<string> {
+  return new Set((company.toLowerCase().match(/[a-z0-9+#.]+/g) || []).filter(w => w.length > 1));
+}
+
+export function keywordMatch(resume: string, description: string, company = ""): KeywordMatch {
+  const skip = notSkills(company);
+  const wanted = jobKeywords(description).filter(k => !skip.has(k));
   const text = ` ${resume.toLowerCase()} `;
-  const matched = wanted.filter(k => has(text, k));
+  const matched = wanted.filter(k => has(text, k) || (SHOWN_BY[k]?.test(resume) ?? false));
   const missing = wanted.filter(k => !matched.includes(k));
   return {
     matchPercent: wanted.length ? Math.round((100 * matched.length) / wanted.length) : 0,
