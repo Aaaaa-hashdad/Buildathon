@@ -87,8 +87,9 @@ The user can attach a resume or cover letter (PDF, Word .docx or text) in chat, 
 ${DRAFT_REQUEST_FORMAT}
    For a job the user asks about later ("write a cover letter for the Pinterest job"), add it to "Applications"
    if needed and send a draft request for just that job.
-   If you can't send email (no mail tool, mailbox not connected), don't stop: say in one line that connecting
-   their email in Go makes drafting automatic, then draft in chat instead (see "Drafting in chat").
+   Draft requests only start the routine through the mail tool (Superhuman Mail). If the mail tool isn't
+   connected, don't send them through Gmail (they wouldn't start anything): draft in chat instead (see
+   "Drafting in chat"), and say in one line that connecting Superhuman Mail in Go would make drafting automatic.
 
 ## Drafting in chat
 Only when email isn't available, or the user asks you directly to write now. Each reply has a time limit, so
@@ -115,6 +116,13 @@ two" while any new job lacks documents. For each job:
    for each now; the Google Doc links will appear in your tracker in a few minutes."
 
 ## Tracking applications
+Email reaches you two ways: the mail tool (Superhuman Mail, whose routines run on new email by themselves) or
+the Gmail connector (pack 1004). If the mail tool isn't connected, check Gmail yourself: at the start of every
+search, in the morning sweep, and whenever the user says "check my email". Load pack 1004 with get_pack_tools,
+then call SearchMessages for the last 7 days with a query like: newer_than:7d ("your application" OR
+"thank you for applying" OR "application received" OR interview OR "next steps" OR offer OR unfortunately OR
+"not moving forward"), plus in:sent emails with "application" or "resume" for applications the user sent.
+Skip emails you've already handled (the row already shows that Status). Never send anything through Gmail.
 Match an email to an "Applications" row on the company and job title.
 - Application received or submitted confirmation ("we received your application", "thank you for applying",
   "your application was sent") -> Applied. If no row matches, add one: the job and company from the email,
@@ -137,6 +145,7 @@ pack.setTools({
     ...jobAlertConnector(["FindBestJobs", "GetJob", "RankJobs", "FindCompany", "ReadDocument"]),
     { packId: GOOGLE_DOCS_PACK_ID },
     { packId: GRAMMARLY_PACK_ID },
+    { packId: 1004 },
   ],
 });
 
@@ -146,21 +155,22 @@ pack.addSuggestedPrompt({
   prompt: "Find new jobs that fit my search plan and add them to my tracker. If I haven't set one up, help me.",
 });
 pack.addSuggestedPrompt({
-  name: "tailor",
-  displayName: "Tailor my resume",
-  prompt: "Tailor my resume and write a cover letter for a job. I'll upload my resume and share the job.",
+  name: "draft",
+  displayName: "Write my resumes",
+  prompt: "Write tailored resumes and cover letters for my Ready jobs that don't have them yet.",
 });
 pack.addSuggestedPrompt({
-  name: "pipeline",
-  displayName: "Where do I stand?",
-  prompt: "Summarize my applications by Status, and list anything waiting on me.",
+  name: "checkEmail",
+  displayName: "Check my email",
+  prompt: "Check my email for application updates and update my tracker.",
 });
 
 // Routines install paused, and schedules run in each installer's own time zone.
 pack.addDefaultRoutine({
   name: "Morning job sweep and Monday follow-ups",
   instructions: `
-Run the whole job search from the search plan without asking questions. If the plan is missing, stop and email
+Check application emails first (see "Tracking applications"). Then run the whole job search from the search
+plan without asking questions. If the plan is missing, stop and email
 the user one line asking them to set it up in chat. Otherwise add the new jobs to the tracker, send the draft
 request emails for them (Finding jobs, step 5), then email the user a digest: the subject "Job Alert: N new jobs", the new jobs grouped by company with title, location,
 posted date and link, and one line on what was skipped. If nothing is new, send nothing.
