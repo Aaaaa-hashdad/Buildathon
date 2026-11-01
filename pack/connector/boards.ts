@@ -145,10 +145,14 @@ function job(board: Board, jobId: string | number, fields: Omit<Job, "id" | "pla
 
 // ---------- matching ----------
 
-/** Every word of the search appears in the title ('engineer' also matches 'Engineering'). */
+/**
+ * Every word of the search is a word in the title, allowing the usual endings: 'engineer' matches
+ * 'Engineering' and 'intern' matches 'Internship', but 'intern' doesn't match 'International'.
+ */
 export function titleMatches(title: string, query: string): boolean {
   const t = title.toLowerCase();
-  return ((query || "").toLowerCase().match(/\w+/g) || []).every(w => t.includes(w));
+  return ((query || "").toLowerCase().match(/\w+/g) || []).every(w =>
+    new RegExp(`\\b${w}(s|es|ing|ings|ship|ships|er|ers|ed)?\\b`).test(t));
 }
 
 /** wanted can list several places: 'Houston, Remote'. Blank = anywhere. */

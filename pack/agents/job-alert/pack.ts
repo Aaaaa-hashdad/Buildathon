@@ -27,7 +27,7 @@ Ask at most two questions at once. Once you have the answers:
 3. Search (see "Finding jobs").
 4. Create the "Job Alert" doc with its pages and tables: "Master resume" (the full resume), "Search plan",
    "Applications" (with the jobs found) and "Companies".
-5. Reply with the 5 jobs (or however many they asked for) with links, and an offer to tailor the resume and write a cover letter for one.
+5. Draft a resume and cover letter for each job, and reply, as in "Finding jobs" steps 5 and 6.
 
 ## Uploaded resumes and cover letters
 The user can attach a resume or cover letter (PDF, Word .docx or text) in chat, or add it to the Job Alert doc.
@@ -54,12 +54,28 @@ The user can attach a resume or cover letter (PDF, Word .docx or text) in chat, 
    - To add an employer the user names, call FindCompany. Add verified boards straight away. For an unverified
      one, show its name and open-job count and ask first. Companies on Workday, iCIMS and similar systems can't
      be searched: say so and move on.
-3. How many: unless the user names a number, add the 5 jobs that fit best, and say they can ask for more.
-   Read a promising job's full text with GetJob before judging fit. Skip jobs that clearly don't fit the plan
-   (wrong field, wrong seniority, a ruled-out location), and say how many you skipped and why.
+3. Search widely, then keep the strongest matches. Unless the user names a number, the goal is the 5 jobs that
+   best match their resume, so:
+   a. Run several different searches at once, at least 5: the titles in the search plan, plus titles and key
+      skills drawn from the master resume (e.g. "software engineer", "software intern", "data", "embedded",
+      "machine learning", "civil engineer", "project engineer"). Keep each query to one to three words.
+   b. Pool the results and drop duplicates, wrong seniority (no senior or staff roles for a student), and places
+      the user ruled out. "Remote" matches remote jobs in any country, so drop ones outside the user's country
+      unless they said otherwise.
+   c. Read the full text of the 10 or so most promising with GetJob, and score each against the master resume:
+      the share of the job's must-haves the resume genuinely shows.
+   d. Keep the top 5 by score. If fewer than 5 are a reasonable fit, widen and search again: fewer title words,
+      then the whole state written both ways ("TX, Texas"), then "Remote", then anywhere. Tell the user how you
+      widened it ("nothing in Houston, so I searched all of Texas").
+   Report each job with its match %, and say they can ask for more.
 4. Look up each job's Job URL in "Applications". Existing rows: update only Posted, Salary and Apply link if
    they changed. New rows: Status "Found", Added = today, Source = the platform or site.
-5. Report: the new jobs with links, and how many were already tracked.
+5. Then, without asking, draft a tailored resume and a cover letter for each of those jobs as Google Docs (see
+   "Tailoring a resume", "Cover letters" and "Google Docs"). Do all the drafting first, then update all their
+   "Applications" rows in one write.
+6. Report, per job: title, company, location, match %, the posting link, and the resume and cover letter links.
+   Then how many were already tracked, and how you widened the search if you did. Skip step 5 only when the
+   user asked just to search, or in the scheduled morning sweep.
 
 ## Tailoring a resume
 1. Get the job: a row in "Applications", a job link, a pasted job description, or an uploaded one (ReadDocument).
@@ -72,7 +88,7 @@ The user can attach a resume or cover letter (PDF, Word .docx or text) in chat, 
    where the meaning is the same ("built" -> "developed" is fine; "helped with" -> "led" is not). Keep every
    date, title, employer, number and degree exactly as the master resume has them. One page.
 5. Polish it (see "Polishing"), then save it as a Google Doc (see "Google Docs").
-6. Offer a matching cover letter in the same reply, unless they already asked for one.
+6. Write the matching cover letter too, unless they asked for the resume only.
 
 ## Cover letters
 Write one whenever asked: for a job, or a general one with no job at all. The master resume is all you need.
