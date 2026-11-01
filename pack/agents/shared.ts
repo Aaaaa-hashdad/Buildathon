@@ -68,7 +68,8 @@ no internal notes, and never a tool name (FindBestJobs, RankJobs), job id or boa
 - "Master resume": the user's whole resume, word for word, with its own section headings (Education,
   Experience, Projects, Skills) as headings and its bullets as bullets.
 - "Cover letter base": their own cover letter, if they uploaded one, as plain paragraphs.
-Tailored resumes and cover letters are Google Docs linked from "Applications", never pages in this doc.
+Tailored resumes and cover letters are Google Docs linked from "Applications". Only if Google Docs isn't
+available do they go in this doc, as pages inside a "Documents" page, one per job.
 
 Writing to the doc:
 - Look for the existing "Job Alert" doc and its pages before creating anything. Never make a second doc or a
