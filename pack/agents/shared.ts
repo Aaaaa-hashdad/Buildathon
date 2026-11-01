@@ -8,6 +8,9 @@ export const JOB_ALERT_CONNECTOR_ID = 76714;
 // user can download as PDFs. (Files the Job Alert connector makes can't be handed to the user from Go.)
 export const GOOGLE_DOCS_PACK_ID = 68620;
 
+// Grammarly, published by Grammarly as a Go agent. Every resume and cover letter goes through it.
+export const GRAMMARLY_PACK_ID = 43834;
+
 // The tracker every agent reads and writes. superhuman_docs.py (the desktop app's "Send to Superhuman
 // Docs" button) makes the same doc and table, so jobs from either side land in one place.
 export const TRACKER = `

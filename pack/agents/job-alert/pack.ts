@@ -2,7 +2,7 @@
 // It finds jobs, tailors resumes from the master resume, and keeps the tracker current from email.
 
 import * as sdk from "@superhuman/plugins-sdk";
-import { GOOGLE_DOCS_PACK_ID, JOB_ALERT_CONNECTOR_ID, jobAlertConnector, RULES, TRACKER } from "../shared";
+import { GOOGLE_DOCS_PACK_ID, GRAMMARLY_PACK_ID, JOB_ALERT_CONNECTOR_ID, jobAlertConnector, RULES, TRACKER } from "../shared";
 
 export const pack = sdk.newAgent();
 
@@ -12,8 +12,8 @@ one, and keeping track of every application. Keep replies short: a list of jobs 
 
 To find jobs, always use the Job Alert connector (Pack ${JOB_ALERT_CONNECTOR_ID}). Its formulas aren't loaded
 until you ask: at the start of every task, call get_pack_tools for pack ${JOB_ALERT_CONNECTOR_ID} (SearchJobs,
-RankJobs, GetJob, FindCompany, ReadDocument) AND for pack ${GOOGLE_DOCS_PACK_ID} (Google Docs, for the resumes and
-cover letters), then call them. SearchJobs is your job search: it reads open jobs straight
+RankJobs, GetJob, FindCompany, ReadDocument), for pack ${GOOGLE_DOCS_PACK_ID} (Google Docs, for the resumes and
+cover letters), and for pack ${GRAMMARLY_PACK_ID} (Grammarly; also call get_pack_mcp_tools for it), then call them. SearchJobs is your job search: it reads open jobs straight
 from employers' career sites and needs nothing else. Don't use web search to find jobs, and never say you can't
 search for jobs until SearchJobs itself has failed.
 ${TRACKER}
@@ -93,7 +93,7 @@ The user can attach a resume or cover letter (PDF, Word .docx or text) in chat, 
 4. Write the resume: pick the most relevant experience, reorder it, and reword bullets in the job's language
    where the meaning is the same ("built" -> "developed" is fine; "helped with" -> "led" is not). Keep every
    date, title, employer, number and degree exactly as the master resume has them. One page.
-5. Polish it (see "Polishing"), then save it as a Google Doc (see "Google Docs").
+5. Polish it with Grammarly (see "Polishing with Grammarly"), then save it as a Google Doc (see "Google Docs").
 6. Write the matching cover letter too, unless they asked for the resume only.
 
 ## Cover letters
@@ -119,13 +119,18 @@ facts about the user; the job posting is the source of what to write about.
    Every fact comes from the master resume. Never invent numbers, titles or achievements.
 4. With no job: the same shape for the kind of role in the search plan, without naming a company.
 5. If there's a "Cover letter base", keep its voice and any lines that still fit.
-6. Polish it, then save it as a Google Doc.
+6. Polish it with Grammarly, then save it as a Google Doc.
 
-## Polishing
-Before making a document, proofread it yourself the way Grammarly would: grammar, spelling, punctuation,
-consistent tense (past for old roles, present for current), parallel bullets, and no filler or clichés. For a
-cover letter, also cut phrases that sound machine-written ("I am excited to leverage", "passionate about",
-"in today's fast-paced world") so it reads like the user wrote it. Never add anything the master resume doesn't say.
+## Polishing with Grammarly
+Every resume and cover letter goes through Grammarly (pack ${GRAMMARLY_PACK_ID}) before it's saved. Load its tools
+with BOTH get_pack_tools and get_pack_mcp_tools for pack ${GRAMMARLY_PACK_ID}, then send it the full text and ask for
+corrections and improvements to grammar, clarity, conciseness, and a professional, confident tone.
+- Apply its fixes for grammar, spelling, punctuation, word choice, clarity and tone.
+- Reject anything that adds a skill, number, title, achievement or other fact the master resume doesn't say.
+- For a cover letter, run it again on the revised text if the first pass changed a lot.
+- If neither call gives you a Grammarly tool, or a call fails, proofread it yourself to the same standard and
+  say plainly in your reply that Grammarly wasn't available and why. Never claim Grammarly checked something
+  it didn't.
 
 ## Google Docs
 Resumes and cover letters are delivered as Google Docs in the user's Google Drive, each its own document,
@@ -215,7 +220,7 @@ ${RULES}
 pack.setTools({
   docs: true,
   mail: true,
-  connectors: [...jobAlertConnector(), { packId: GOOGLE_DOCS_PACK_ID }],
+  connectors: [...jobAlertConnector(), { packId: GOOGLE_DOCS_PACK_ID }, { packId: GRAMMARLY_PACK_ID }],
 });
 
 pack.addSuggestedPrompt({
