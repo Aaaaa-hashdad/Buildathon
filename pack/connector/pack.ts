@@ -4,6 +4,7 @@
 import * as sdk from "@superhuman/plugins-sdk";
 import { DEFAULT_COMPANIES, DOMAINS, ENABLED, findCompany, getJob, Job, requireBoard, searchBoard } from "./boards";
 import { readDocument } from "./documents";
+import { keywordMatch } from "./keywords";
 import { markdownToPdf } from "./pdf";
 
 export const pack = sdk.newPack();
@@ -178,6 +179,48 @@ pack.addFormula({
   }),
   execute: async function ([file], context) {
     return readDocument(context, file);
+  },
+});
+
+pack.addFormula({
+  name: "RankJobs",
+  description: "Scores jobs against a resume by keywords: the skills and tools each job names, and which ones the " +
+    "resume shows. Returns the jobs best match first, with matched and missing keywords.",
+  parameters: [
+    sdk.makeParameter({
+      type: sdk.ParameterType.StringArray,
+      name: "jobIds",
+      description: "Job ids from SearchJobs (greenhouse:stripe:12345). Up to 25.",
+    }),
+    sdk.makeParameter({
+      type: sdk.ParameterType.String,
+      name: "resume",
+      description: "The resume's full text.",
+    }),
+  ],
+  resultType: sdk.ValueType.Array,
+  items: sdk.makeObjectSchema({
+    properties: {
+      id: { type: sdk.ValueType.String },
+      title: { type: sdk.ValueType.String },
+      company: { type: sdk.ValueType.String },
+      location: { type: sdk.ValueType.String },
+      jobUrl: { type: sdk.ValueType.String, codaType: sdk.ValueHintType.Url },
+      matchPercent: { type: sdk.ValueType.Number, description: "Share of the job's keywords the resume shows." },
+      matched: { type: sdk.ValueType.Array, items: { type: sdk.ValueType.String } },
+      missing: { type: sdk.ValueType.Array, items: { type: sdk.ValueType.String } },
+    },
+    displayProperty: "title",
+  }),
+  execute: async function ([jobIds, resume], context) {
+    const jobs = await Promise.allSettled(jobIds.slice(0, 25).map(id => getJob(context, id)));
+    return jobs
+      .filter((r): r is PromiseFulfilledResult<Job> => r.status === "fulfilled")
+      .map(({ value: j }) => ({
+        id: j.id, title: j.title, company: j.company, location: j.location, jobUrl: j.jobUrl,
+        ...keywordMatch(resume, `${j.title}\n${j.description}`),
+      }))
+      .sort((a, b) => b.matchPercent - a.matchPercent || a.missing.length - b.missing.length);
   },
 });
 
