@@ -71,7 +71,8 @@ The user can attach a resume or cover letter (PDF, Word .docx or text) in chat, 
       widened it ("nothing in Houston, so I searched all of Texas").
    Report each job with its match %, and say they can ask for more.
 4. Look up each job's posting link in "Applications". Existing rows: update only Posted and Pay if they changed.
-   New rows: Status "Ready", Added = today, and Pay and Eligibility read from the full posting (GetJob).
+   New rows: Status "Ready", Added = today, Pay and Eligibility from the posting, Match % and both keyword
+   columns from RankJobs.
 5. Then, without asking, draft a tailored resume and a cover letter as Google Docs (see "Tailoring a resume",
    "Cover letters" and "Google Docs") for the 5 best matches: two new Google Docs per job, so 10. The rest stay
    Ready without documents; the user can ask you to draft them ("draft the rest", "draft #8"), 5 at a time.

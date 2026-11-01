@@ -29,6 +29,7 @@ Table "Applications", one row per job, matched on the posting link (never add a 
 - Eligibility: who can apply, in a few words: "Bachelor's, any year", "Sophomores and juniors", "PhD only",
   "Grad 2027–2028", "US work authorization". Blank if the posting says nothing.
 - Match %: a number from RankJobs.
+- Matched keywords and Missing keywords: from RankJobs, comma-separated, most important first, up to 10 each.
 - Resume and Cover letter: links to the Google Docs, labeled "Resume" and "Cover letter".
 - Posted and Added: dates as "Oct 31, 2026".
 Pay and eligibility often sit side by side in a posting ("$30/hr for freshmen and sophomores"): split them,
